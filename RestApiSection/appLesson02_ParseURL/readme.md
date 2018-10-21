@@ -1,4 +1,4 @@
-# Lesson 01: Create Server
+# Lesson 02: Parse URL from request in HTTP server
 
 This lesson was to show how to parse the request URL in a NodeJS HTTP server listener.
 
