@@ -8,7 +8,7 @@ var http = require('http');
 var ParsedRequest = require('./ParsedRequest');
 var ResponseManager = require('./ResponseManager');
 
-// The server should respond to all request with a string
+// The server should respond to all requests
 var server = http.createServer(function(req, res) {
     var parsed = new ParsedRequest(req);
     var manager = new ResponseManager(parsed);
