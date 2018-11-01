@@ -49,7 +49,7 @@ ResponseHandler.prototype.buildBasicResponse = function(httpStatus, contentType,
     // Send the response
     this.response.writeHead(statusCode, {'Content-Type': type});
     this.response.end(payload);
-    select(responseManager, endService);
+    //select(responseManager, endService);
 }
 
 var endService = function(svcManager, body) {
