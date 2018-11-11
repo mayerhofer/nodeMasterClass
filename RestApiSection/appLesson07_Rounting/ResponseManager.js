@@ -10,54 +10,61 @@
  */
 
 // Dependencies
-var select = require('./modules/moduleSelector');
+var router = require('./modules/router');
 
-/**
- * Currently modern browsers keep making more than one request:
- * * One normal request
- * * Another for the favicon.ico regardless of if your page provides one
- *  That usually gives 404 errors
- *  Removing favicon requests to avoid 404 errors
- * 
- * @function manageFaviconRequest
- * @param {object} httpResponse - HTTP response where service's response will be set up. 
- */
-var manageFaviconRequest = function(httpResponse) {
-    httpResponse.writeHead(200, {'Content-Type': 'image/x-icon'} );
-    httpResponse.end();
-    return true;
+function isEmpty(obj) {
+    if (! obj) {
+        return true;
+    }
+    for(var prop in obj) {
+        if(obj.hasOwnProperty(prop))
+            return false;
+    }
+
+    return JSON.stringify(obj) === JSON.stringify({});
 }
 
 /**
- * Standard service request logic starting point.
- * Defines all logic to be executed in order to generate any standard response upon client's request.
+ * After handling request, this method builds the response with results given as parameters.
  * 
- * @function manageBaseRequest
- * @param {object} httpResponse - HTTP response where service's response will be set up.
+ * @function buildBasicResponse
+ * @param {number} httpStatus - HTTP status code that should be returned.
+ * @param {string} contentType - Description of HTTP message type to set on response head.
+ * @param {object} data - String, object or nothing: payload for response.
  */
 ResponseHandler.prototype.buildBasicResponse = function(httpStatus, contentType, data) {
 
     // Use status from handler, or default to 200
     var statusCode = typeof(httpStatus) == 'number' ? httpStatus : 200;
 
-    // Use payload from handler, or default to empty object
-    var payload = typeof(data) == 'object' ? data : {};
-
     // Use content type from handler, or default to 'text/html'
     var type = typeof(contentType) == 'string' ? contentType : 'text/html';
 
-    // Send the response
-    this.response.writeHead(statusCode, {'Content-Type': type});
-    this.response.end(payload);
-    //select(responseManager, endService);
-}
-
-var endService = function(svcManager, body) {
-    svcManager.response.end(body);
-}
-
-var doNothing = function(httpResponse) {
-    this.response = httpResponse;
+    // Use payload from handler, or default to empty object
+    var payload;
+    switch(type) {
+        case 'application/json':
+            payload = typeof(data) == 'object' ? data : {};
+            this.response.writeHead(statusCode, {'Content-Type': type});
+            if (isEmpty(payload)) {
+                this.response.end();
+            } else {
+                this.response.end(payload);
+            }
+            break;
+        case 'text/html':
+            payload = typeof(data) == 'string' ? data : '';
+            this.response.writeHead(statusCode, {'Content-Type': type});
+            this.response.end(payload);
+            break;
+        case 'image/x-icon':
+            this.response.writeHead(statusCode, {'Content-Type': type});
+            this.response.end(data, 'binary');
+            break;
+        default:
+            payload = null;
+            break;
+    }
 }
 
 /**
@@ -65,18 +72,16 @@ var doNothing = function(httpResponse) {
  * @param {object} parsedRequest - The parsed important elements from HTTP request received by this service.
  * 
  */
-function ResponseHandler(parsedRequest) {
+function ResponseHandler(parsedRequest, res) {
     // Get elements from parsed request.
     this.elements = parsedRequest.getElements();
+    // Get response object from Request
+    this.response = res;
 
     // If route not found, choose default handler (404 - Not Found)
-    var handler = typeof(router[this.elements.moduleRoute]) == 'object' ? router[this.elements.moduleRoute] : router['default'];
-    handler.handleRequest(this.elements, );
-    responseData = handler.getResponse
-    ResponseManager.prototype.execute = function(res) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        handler()
-    }
+    console.log('handler: ' + this.elements.moduleRoute);
+    var handler = typeof(router[this.elements.moduleRoute]) == 'function' ? router[this.elements.moduleRoute] : router['default'];
+    handler(this.elements.parameters, this.buildBasicResponse.bind(this));
 }
 
-module.exports = ResponseManager;
+module.exports = ResponseHandler;

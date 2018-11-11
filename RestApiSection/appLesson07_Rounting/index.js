@@ -14,15 +14,13 @@ var config = require('./config/config');
 
 // Internal Modules dp.
 var ParsedRequest = require('./ParsedRequest');
-var ResponseManager = require('./ResponseManager');
+var ResponseHandler = require('./ResponseManager');
 
 
 // Unified process for all requests to this server
 var unifiedServer = function(req, res) {
     var parsed = new ParsedRequest(req);
-    var manager = new ResponseManager(parsed);
-    
-    manager.execute(res);
+    var manager = new ResponseHandler(parsed, res);
 }
 
 // The server instance that should respond to all HTTP requests

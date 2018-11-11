@@ -64,7 +64,7 @@ function ParsedRequest(request) {
     // Build request elements object
     this.elements = result;
     this.elements.trimmedPath = trimmedPath;
-    this.elements.moduleRoute = (trimmedPath.indexOf("/") >= 0 ? path.substring(0, trimmedPath.indexOf("/")) : path).toLowerCase();
+    this.elements.moduleRoute = (trimmedPath.indexOf("/") >= 0 ? trimmedPath.substring(0, trimmedPath.indexOf("/")) : trimmedPath).toLowerCase();
     this.elements.method = method;
     this.elements.headers = Object.assign({}, request.headers);
     this.elements.parameters = Object.assign({}, queryStringObject);
