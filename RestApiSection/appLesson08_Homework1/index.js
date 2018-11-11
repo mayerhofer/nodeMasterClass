@@ -18,8 +18,8 @@ var unifiedServer = function(req, res) {
     // Get the HTTP method
     var method = req.method.toLowerCase();
 
-    // Only send message if path is hello and method equals to get
-    if (trimmedPath.toLowerCase() == 'hello' && method == 'get') {
+    // Only send message if path is hello and method equals to post
+    if (trimmedPath.toLowerCase() == 'hello' && method == 'post') {
         // Send JSON with hello world message
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({
