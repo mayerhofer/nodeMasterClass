@@ -6,7 +6,7 @@ var handlers = {};
 // Define sample handler
 handlers.sample = function(data, callback) {
     console.log('sample')
-    callback(406, {'name': 'sample handler called'});
+    callback(406, 'application/json', {'name': 'sample handler called'});
 };
 
 // Define the not found handler

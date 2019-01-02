@@ -49,7 +49,7 @@ ResponseHandler.prototype.buildBasicResponse = function(httpStatus, contentType,
             if (isEmpty(payload)) {
                 this.response.end();
             } else {
-                this.response.end(payload);
+                this.response.end(JSON.stringify(payload));
             }
             break;
         case 'text/html':
