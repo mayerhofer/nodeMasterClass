@@ -1,7 +1,7 @@
-# Lesson 06: Adding HTTPS support to Service
+# Lesson 07: Adding Routing module
 
-This lesson was to show how to add HTTPS support in a NodeJS project.
-To test it, run with different environment setups as described in the [To Run](#To-Run) section.
+This lesson is to teach and explain a router structure made to route each request upon given URL entry to service.
+To test it, run the requests described in the [To Run](#To-Run) section.
 
 ### Requirements
 1. NodeJS - [Official WebSite](https://nodejs.org/en/)
@@ -21,7 +21,12 @@ cert.pem
 > NODE_ENV=staging node index.js
 > NODE_ENV=production node index.js
 
-Open browser and navigate to https://localhost:(port)
+Open browser and navigate to:
+https://localhost:3000/sample : A GET to this URL should return a response object with name "https://localhost:3000/hello" and error status 406.
+https://localhost:3000/hello : Should return a page with a Hello World message.
+https://localhost:3000/ {any other path} : Should return a default "Not Found" (404) page.
+    
+     
 
 ### Observations:
 * Browser will warn with a unsafe certifacate error in witch issuer cannot be verified.
