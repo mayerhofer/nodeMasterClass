@@ -1,7 +1,7 @@
-# Lesson 06: Adding HTTPS support to Service
+# Lesson 09: Storing data - user objects
 
-This lesson was to show how to add HTTPS support in a NodeJS project.
-To test it, run with different environment setups as described in the [To Run](#To-Run) section.
+This lesson was to show how to store JSON objects using file storage.
+To test it, you may run with different environment setups as described in the [To Run](#To-Run) section.
 
 ### Requirements
 1. NodeJS - [Official WebSite](https://nodejs.org/en/)
@@ -21,12 +21,20 @@ cert.pem
 > NODE_ENV=staging node index.js
 > NODE_ENV=production node index.js
 
-Open browser and navigate to https://localhost:(port)
+Open browser and navigate to:
+https://localhost:3000/sample : A GET to this URL should return a response object with name "https://localhost:3000/hello" and error status 406.
+https://localhost:3000/hello : Should return a page with a Hello World message.
+https://localhost:3000/users : (using Postman or similar)
+ - A GET with "phone" URL parameter should return a JSON with the user data or 404 if not found any with given phone number.
+ - A POST should save a new user if there is not already one with the same specified phone number.
+ - A PUT with "phone" URL parameter should update the user data of the user with the specified phone number.
+ - A DELETE with "phone" URL paramenter should delete the user with the specified phone number.
+https://localhost:3000/ {any other path} : Should return a default "Not Found" (404) page.
 
 ### Observations:
 * Browser will warn with a unsafe certifacate error in witch issuer cannot be verified.
 * This happens due the fact we are not using a publicly verified certificate.
-* Other way to test is using a tool such as Postman. With it is possible to make requests to different methods than GET. It is possible to call all other HTTP method.
+* One way to test is using a tool such as Postman. With it is possible to make requests to different methods than GET. It is possible to call all other HTTP method.
 
 ### What you should see with this exercise?
 Access to this server is now possible using HTTPS (HTTP over SSL) protocol.
