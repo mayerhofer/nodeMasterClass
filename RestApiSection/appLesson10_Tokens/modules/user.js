@@ -7,6 +7,7 @@ var fs = require('fs');
 
 var _data = require('../lib/data');
 var helpers = require('../lib/helpers');
+var tokens = require('./token');
 
 // Define the handlers
 var users = {};
@@ -69,17 +70,30 @@ users.post = function(data, callback) {
 };
 users.get = function(data, callback) {
     var payload = data ? data.parameters : false;
+    if (! payload) {
+        callback(400, 'application/json', {'Error': 'Missing required fields.'});
+        return;
+    }
     // Check that phone number is valid
     var phone = typeof(payload.phone) == 'string' && payload.phone.trim().length > 0 ? payload.phone : false;
+    var token = (data.headers && typeof(data.headers.token) == 'string') ? data.headers.token : false;
+
     if (phone) {
-        // Look up the user
-        _data.read('users', phone, function(err, data) {
-            if (!err && data) {
-                // Remove the hashed password from the user object before returning it to the request
-                delete data.hashedPassword;
-                callback(200, 'application/json', data);
+        // Check if user fetching it's data has a valid access token
+        tokens.verifyToken(token, phone, function(tokenIsValid) {
+            if (tokenIsValid) {
+                // Look up the user
+                _data.read('users', phone, function(err, data) {
+                    if (!err && data) {
+                        // Remove the hashed password from the user object before returning it to the request
+                        delete data.hashedPassword;
+                        callback(200, 'application/json', data);
+                    } else {
+                        callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
+                    }
+                });
             } else {
-                callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
+                callback(403, 'application/json', {'Error':'Missing required token in header, or token is invalid.'});
             }
         });
     } else {
@@ -88,7 +102,6 @@ users.get = function(data, callback) {
 };
 // Required field: phone
 // Optional: firstName, lastName, password (at least one must be specified)
-// @TODO Only let an authenticated user update their own object.
 users.put = function(data, callback) {
     // Check if request has a valid payload
     var payload = data ? data.payload : false;
@@ -104,59 +117,79 @@ users.put = function(data, callback) {
     var lastName = typeof(payload.lastName) == 'string' && payload.lastName.trim().length > 0 ? payload.lastName.trim() : false;
     var password = typeof(payload.password) == 'string' && payload.password.trim().length > 0 ? payload.password.trim() : false;
 
+    var token = (data.headers && typeof(data.headers.token) == 'string') ? data.headers.token : false;
+
     if (phone) {
-        if (firstName || lastName || password) {
-            // Look up the user
-            _data.read('users', phone, function(err, data) {
-                if (!err && data) {
-                    if (firstName) {
-                        data.firstName = firstName;
-                    }
-                    if (lastName) {
-                        data.lastName = lastName;
-                    }
-                    if (password) {
-                        data.hashedPassword = helpers.hash(password);
-                    }
-                    // Store the new updates
-                    _data.update('users', phone, data, function(err) {
-                        if (err) {
-                            callback(500, 'application/json', {"Error": "Could not update the user."});
+        // Check if user fetching it's data has a valid access token
+        tokens.verifyToken(token, phone, function(tokenIsValid) {
+            if (tokenIsValid) {
+                if (firstName || lastName || password) {
+                    // Look up the user
+                    _data.read('users', phone, function(err, data) {
+                        if (!err && data) {
+                            if (firstName) {
+                                data.firstName = firstName;
+                            }
+                            if (lastName) {
+                                data.lastName = lastName;
+                            }
+                            if (password) {
+                                data.hashedPassword = helpers.hash(password);
+                            }
+                            // Store the new updates
+                            _data.update('users', phone, data, function(err) {
+                                if (err) {
+                                    callback(500, 'application/json', {"Error": "Could not update the user."});
+                                } else {
+                                    callback(200, 'application/json');
+                                }
+                            });
                         } else {
-                            callback(200, 'application/json');
+                            callback(404, 'application/json', {"Error": "Could not find user with phone: " + phone});
                         }
                     });
                 } else {
-                    callback(404, 'application/json', {"Error": "Could not find user with phone: " + phone});
+                    callback(400, 'application/json', {"Error": "Missing fields to update."});
                 }
-            });
-        } else {
-            callback(400, 'application/json', {"Error": "Missing fields to update."});
-        }
+            } else {
+                callback(403, 'application/json', {'Error':'Missing required token in header, or token is invalid.'});
+            }
+        });
     } else {
         callback(400, 'application/json', {"Error": "Missing phone in correct format on query string."});
     }
 };
 // Required field: phone
-// @TODO Only let an authenticated user delete their user.
 // @TODO Cleaning (delete) any other data files associated with this user.
 users.delete = function(data, callback) {
     var payload = data ? data.parameters : false;
+    if (! payload) {
+        callback(400, 'application/json', {'Error': 'Missing required fields.'});
+        return;
+    }
     // Check that phone number is valid
     var phone = typeof(payload.phone) == 'string' && payload.phone.trim().length > 0 ? payload.phone : false;
+    var token = (data.headers && typeof(data.headers.token) == 'string') ? data.headers.token : false;
     if (phone) {
-        // Look up the user
-        _data.read('users', phone, function(err, data) {
-            if (!err && data) {
-                _data.delete('users', phone, function(err) {
-                    if(!err) {
-                        callback(200, 'application/json');
+        // Check if user fetching it's data has a valid access token
+        tokens.verifyToken(token, phone, function(tokenIsValid) {
+            if (tokenIsValid) {
+                // Look up the user
+                _data.read('users', phone, function(err, data) {
+                    if (!err && data) {
+                        _data.delete('users', phone, function(err) {
+                            if(!err) {
+                                callback(200, 'application/json');
+                            } else {
+                                callback(500, 'application/json', {"Error": "Could not delete the user with phone: " + phone});
+                            }
+                        });
                     } else {
-                        callback(500, 'application/json', {"Error": "Could not delete the user with phone: " + phone});
+                        callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
                     }
                 });
             } else {
-                callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
+                callback(403, 'application/json', {'Error':'Missing required token in header, or token is invalid.'});
             }
         });
     } else {

@@ -25,10 +25,10 @@ tokens.post = function(data, callback) {
     var password = typeof(payload.password) == 'string' && payload.password.trim().length > 0 ? payload.password.trim() : false;
 
     if (phone && password) {
-        // Make sure the user does not already exist
+        // Lookup for the user specified by the phone number
         _data.read('users', phone, function(err, data) {
             if (err) {
-                // User already exists
+                // User not found exists
                 callback(400, 'application/json', {'Error': 'A user with that phone number was not found.'});
                 return;
             }
@@ -40,6 +40,7 @@ tokens.post = function(data, callback) {
                 callback(500, 'application/json', {'Error': 'Could not hash the user\'s password.'});
                 return;
             }
+            // Check if submitted password is the same as stored password
             if (hashedPassword != data.hashedPassword) {
                 callback(400, 'application/json', {'Error': 'Wrong password for that user.'});
                 return;
@@ -54,42 +55,46 @@ tokens.post = function(data, callback) {
                 'expires': expires,
             };
 
-            // Store the user
+            // Store a token for that user
             _data.create('tokens', tokenId, tokeObject, function(err) {
                 if (err) {
                     console.log(err);
                     callback(500, 'application/json', {'Error': 'Could not create the new token.'});
                     return;
                 }
-                callback(200, tokeObject);
+                callback(200, 'application/json', tokeObject);
             });
         });
     } else {
         callback(400, 'application/json', {'Error': 'Missing required fields.'});
     }
 };
+
+// Required data: id
+// Optional data: none
 tokens.get = function(data, callback) {
     var payload = data ? data.parameters : false;
-    // Check that phone number is valid
-    var phone = typeof(payload.phone) == 'string' && payload.phone.trim().length > 0 ? payload.phone : false;
-    if (phone) {
-        // Look up the user
-        _data.read('users', phone, function(err, data) {
+    if (! payload) {
+        callback(400, 'application/json', {'Error': 'Missing required fields.'});
+        return;
+    }
+    // Check inputs
+    var id = typeof(payload.id) == 'string' && payload.id.trim().length == 20 ? payload.id.trim() : '';
+    if (id) {
+        // Look up the token
+        _data.read('tokens', id, function(err, data) {
             if (!err && data) {
-                // Remove the hashed password from the user object before returning it to the request
-                delete data.hashedPassword;
                 callback(200, 'application/json', data);
             } else {
-                callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
+                callback(404, 'application/json', {"Error": "Could not read token with id: " + id, "FsError": err});
             }
         });
     } else {
-        callback(400, 'application/json', {"Error": "Missing phone in correct format on query string."});
+        callback(400, 'application/json', {"Error": "Missing parameter id in correct format on query string."});
     }
 };
-// Required field: phone
-// Optional: firstName, lastName, password (at least one must be specified)
-// @TODO Only let an authenticated user update their own object.
+// Required field: id, extend
+// Optional: none
 tokens.put = function(data, callback) {
     // Check if request has a valid payload
     var payload = data ? data.payload : false;
@@ -97,72 +102,76 @@ tokens.put = function(data, callback) {
         callback(400, 'application/json', {'Error': 'Missing required fields.'});
         return;
     }
-    // Check that phone number is valid
-    var phone = typeof(payload.phone) == 'string' && payload.phone.trim().length > 0 ? payload.phone : false;
+    // Check inputs
+    var id = typeof(payload.id) == 'string' && payload.id.trim().length == 20 ? payload.id.trim() : '';
+    var extend = typeof(payload.extend) == 'boolean' && payload.extend == true ? true : false;
 
-    // Check for the optional fields
-    var firstName = typeof(payload.firstName) == 'string' && payload.firstName.trim().length > 0 ? payload.firstName.trim() : false;
-    var lastName = typeof(payload.lastName) == 'string' && payload.lastName.trim().length > 0 ? payload.lastName.trim() : false;
-    var password = typeof(payload.password) == 'string' && payload.password.trim().length > 0 ? payload.password.trim() : false;
+    if (id && extend) {
+        // Look up the token
+        _data.read('tokens', id, function(err, data) {
+            if (!err && data) {
+                // Check to make sure the token isn't already expired
+                if (data.expires > Date.now()) {
+                    // Set the expiration an hour from now
+                    data.expires = Date.now() + 1000 * 60 * 60;
 
-    if (phone) {
-        if (firstName || lastName || password) {
-            // Look up the user
-            _data.read('users', phone, function(err, data) {
-                if (!err && data) {
-                    if (firstName) {
-                        data.firstName = firstName;
-                    }
-                    if (lastName) {
-                        data.lastName = lastName;
-                    }
-                    if (password) {
-                        data.hashedPassword = helpers.hash(password);
-                    }
                     // Store the new updates
-                    _data.update('users', phone, data, function(err) {
-                        if (err) {
-                            callback(500, 'application/json', {"Error": "Could not update the user."});
-                        } else {
+                    _data.update('tokens', id, data, function(err) {
+                        if (!err) {
                             callback(200, 'application/json');
+                        } else {
+                            callback(500, 'application/json', {'Error' : 'Could not update the token\'s expiration.'});
                         }
                     });
                 } else {
-                    callback(404, 'application/json', {"Error": "Could not find user with phone: " + phone});
+                    callback(400, 'application/json', {'Error': 'The token has already expired, and cannot be extended.'});
                 }
-            });
-        } else {
-            callback(400, 'application/json', {"Error": "Missing fields to update."});
-        }
-    } else {
-        callback(400, 'application/json', {"Error": "Missing phone in correct format on query string."});
-    }
-};
-// Required field: phone
-// @TODO Only let an authenticated user delete their user.
-// @TODO Cleaning (delete) any other data files associated with this user.
-tokens.delete = function(data, callback) {
-    var payload = data ? data.parameters : false;
-    // Check that phone number is valid
-    var phone = typeof(payload.phone) == 'string' && payload.phone.trim().length > 0 ? payload.phone : false;
-    if (phone) {
-        // Look up the user
-        _data.read('users', phone, function(err, data) {
-            if (!err && data) {
-                _data.delete('users', phone, function(err) {
-                    if(!err) {
-                        callback(200, 'application/json');
-                    } else {
-                        callback(500, 'application/json', {"Error": "Could not delete the user with phone: " + phone});
-                    }
-                });
             } else {
-                callback(404, 'application/json', {"Error": "Could not read user with phone: " + phone, "FsError": err});
+                callback(404, 'application/json', {"Error": "Could not find token with id: " + id});
             }
         });
     } else {
-        callback(400, 'application/json', {"Error": "Missing phone in correct format on query string."});
+        callback(400, 'application/json', {"Error": "Missing required field(s) or field(s) are invalid."});
     }
 };
+// Required field: id
+tokens.delete = function(data, callback) {
+    var payload = data ? data.parameters : false;
+    if (! payload) {
+        callback(400, 'application/json', {'Error': 'Missing required fields.'});
+        return;
+    }
+    // Check inputs
+    var id = typeof(payload.id) == 'string' && payload.id.trim().length == 20 ? payload.id.trim() : '';
+    if (id) {
+        // Look up the token
+        _data.read('tokens', id, function(err, data) {
+            if (!err && data) {
+                _data.delete('tokens', id, function(err) {
+                    if(!err) {
+                        callback(200, 'application/json');
+                    } else {
+                        callback(500, 'application/json', {"Error": "Could not delete the token with id: " + id});
+                    }
+                });
+            } else {
+                callback(404, 'application/json', {"Error": "Could not read token with id: " + id, "FsError": err});
+            }
+        });
+    } else {
+        callback(400, 'application/json', {"Error": "Missing parameter id in correct format on query string."});
+    }
+};
+// Verify if a given token id is currently valid for a given user
+tokens.verifyToken = function(id,phone,callback) {
+    // Lookup the token
+    _data.read('tokens', id, function(err, tokenData) {
+        if (!err && tokenData && tokenData.phone == phone && tokenData.expires > Date.now()) {
+            callback(true);
+        } else {
+            callback(false);
+        }
+    });
+}
 
 module.exports = tokens;
