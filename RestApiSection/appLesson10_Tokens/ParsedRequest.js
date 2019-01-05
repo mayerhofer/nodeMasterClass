@@ -55,8 +55,6 @@ function ParsedRequest(request) {
         buffer += decoder.end();
         // Store payload from requests in request elements property object.
         self.elements.payload = helpers.parseJsonToObject(buffer);
-        console.log('setting payload');
-        console.log(self.elements.payload);
 
         // Call any setted callbacks upon request 'end' event.
         if (self.callbackEvents) {

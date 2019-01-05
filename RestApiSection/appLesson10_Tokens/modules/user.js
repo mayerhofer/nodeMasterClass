@@ -160,7 +160,6 @@ users.put = function(data, callback) {
     }
 };
 // Required field: phone
-// @TODO Cleaning (delete) any other data files associated with this user.
 users.delete = function(data, callback) {
     var payload = data ? data.parameters : false;
     if (! payload) {
@@ -179,7 +178,23 @@ users.delete = function(data, callback) {
                     if (!err && data) {
                         _data.delete('users', phone, function(err) {
                             if(!err) {
-                                callback(200, 'application/json');
+                                // Delete each check in the user data
+                                var userChecks = data.checks;
+                                var deletionErrors = 0;
+                                if (userChecks.length > 0) {
+                                    userChecks.forEach(element => {
+                                        _data.delete('checks', element, function(err) {
+                                            if (err){
+                                                deletionErrors++;
+                                            }
+                                        });
+                                    });
+                                }
+                                if (deletionErrors > 0){
+                                    callback(500,'application/json',{'Error':'Errors encountered while deleting checks in the user with phone: ' + phone});
+                                } else {
+                                    callback(200, 'application/json');
+                                }
                             } else {
                                 callback(500, 'application/json', {"Error": "Could not delete the user with phone: " + phone});
                             }

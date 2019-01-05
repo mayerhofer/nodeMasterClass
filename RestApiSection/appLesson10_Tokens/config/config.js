@@ -11,7 +11,8 @@ environments.staging = {
     'httpPort': 3000,
     'httpsPort': 3001,
     'envName': 'staging',
-    'hashingSecret': 'thisIsSecret'
+    'hashingSecret': 'thisIsSecret',
+    'maxChecks': 5
 };
 
 // Production environment
@@ -20,7 +21,8 @@ environments.production = {
     'httpPort': 5000, // standard prod web app listens to 80
     'httpsPort': 5001, // standard prod web app with SSL listens to 443
     'envName': 'production',
-    'hashingSecret': 'thisIsSecret'
+    'hashingSecret': 'thisIsSecret',
+    'maxChecks': 5
 };
 
 // Determine witch environment was passed as command-line argument

@@ -3,6 +3,7 @@ var fs = require('fs');
 var _data = require('../lib/data');
 var _users = require('./user');
 var _tokens = require('./token');
+var _checks = require('./check');
 var helpers = require('../lib/helpers');
 
 
@@ -50,6 +51,15 @@ handlers.tokens = function(data, callback) {
     }
 }
 
+handlers.checks = function(data, callback) {
+    var acceptableMethods = ['post','get','put','delete'];
+    if (acceptableMethods.indexOf(data.method) > -1) {
+        _checks[data.method](data, callback);
+    } else {
+        callback(405);
+    }
+}
+
 handlers._users = {};
 
 // Define the router
@@ -59,7 +69,8 @@ var router = {
     'default': handlers.notFound,
     'hello': handlers.hello,
     'users': handlers.users,
-    'tokens': handlers.tokens
+    'tokens': handlers.tokens,
+    'checks': handlers.checks
 };
 
 module.exports = router;
