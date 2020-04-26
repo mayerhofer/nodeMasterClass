@@ -3,8 +3,6 @@
  */
 
 // Dependencies
-var fs = require('fs');
-
 var _data = require('../lib/data');
 var helpers = require('../lib/helpers');
 var tokens = require('./token');

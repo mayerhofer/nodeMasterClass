@@ -5,6 +5,8 @@
 // Dependencies
 var crypto = require('crypto');
 var config = require('../config/config');
+var queryString = require('querystring');
+var https = require('https');
 
 // Container for all the helpers
 var helpers = {};
@@ -48,6 +50,64 @@ helpers.createRandomString = function(number) {
         return str;
     } else {
         return false;
+    }
+}
+
+helpers.sendTwilioSms = function(phone, msg, callback) {
+    // Validate input parameters
+    phone = typeof(phone) == 'string' && phone.trim().length >= 10 ? phone.trim() : false;
+    msg = typeof(msg) == 'string' && msg.trim().length > 0 && msg.trim().length <= 1600 ? msg.trim() : false;
+
+    if (phone && msg) {
+        // Configure the Twilio service request payload
+        let payload = {
+            'From': config.twilio.fromPhone,
+            'To': phone,
+            'Body': msg
+        };
+
+        // Payload should be stringified to be sent as URL parameter
+        let payloadText = queryString.stringify(payload);
+
+        // Configure request details
+        let requestDetails = {
+            'protocol': 'https:',
+            'hostname': 'api.twilio.com',
+            'method': 'POST',
+            'path': '/2010-04-01/Accounts/' + config.twilio.accountSId + '/Messages.json',
+            'auth': config.twilio.accountSId + ':' + config.twilio.authToken,
+            'headers': {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(payloadText)
+            }
+        };
+        console.log({requestDetails, payload})
+
+        // Create request object instance
+        let request = https.request(requestDetails, function(res) {
+            // Grab status of the response
+            var status = res.statusCode;
+
+            // Callback successfully if the request went through
+            if (status === 200 || status === 201) {
+                callback(false);
+            } else {
+                callback(`Twilio Send SMS: Twilio service replyed with status ${status} and message ${res.statusMessage}.`);
+            }
+        });
+
+        // Bind to the error event so it doesn't get thrown
+        request.on('error', function(e) {
+            callback(e);
+        });
+
+        // Attach the payload to the request
+        request.write(payloadText);
+
+        // Fire the request
+        request.end();
+    } else {
+        callback('Twilio Send SMS: Given parameters were missing or invalid.')
     }
 }
 

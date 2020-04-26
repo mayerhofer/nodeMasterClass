@@ -3,8 +3,6 @@
  */
 
 // Dependencies
-var fs = require('fs');
-
 var _data = require('../lib/data');
 var helpers = require('../lib/helpers');
 
@@ -28,14 +26,13 @@ tokens.post = function(data, callback) {
         // Lookup for the user specified by the phone number
         _data.read('users', phone, function(err, data) {
             if (err) {
-                // User not found exists
+                // User not found
                 callback(400, 'application/json', {'Error': 'A user with that phone number was not found.'});
                 return;
             }
 
             // Hash the password
             var hashedPassword = helpers.hash(password);
-
             if (!hashedPassword) {
                 callback(500, 'application/json', {'Error': 'Could not hash the user\'s password.'});
                 return;
@@ -58,7 +55,6 @@ tokens.post = function(data, callback) {
             // Store a token for that user
             _data.create('tokens', tokenId, tokeObject, function(err) {
                 if (err) {
-                    console.log(err);
                     callback(500, 'application/json', {'Error': 'Could not create the new token.'});
                     return;
                 }

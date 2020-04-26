@@ -9,6 +9,12 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 
+// @TODO GET RID OF THIS
+var helpers = require('./lib/helpers');
+helpers.sendTwilioSms('+48504415852', 'Hello! From my NodeJS learning exercise :)', function(err) {
+    console.log('this was the error', err);
+});
+
 // Config dp.
 var config = require('./config/config');
 
