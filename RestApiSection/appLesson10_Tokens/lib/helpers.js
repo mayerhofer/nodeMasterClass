@@ -53,15 +53,15 @@ helpers.createRandomString = function(number) {
     }
 }
 
-helpers.sendTwilioSms = function(phone, msg, callback) {
+helpers.sendSms = function(phone, msg, callback) {
     // Validate input parameters
     phone = typeof(phone) == 'string' && phone.trim().length >= 10 ? phone.trim() : false;
     msg = typeof(msg) == 'string' && msg.trim().length > 0 && msg.trim().length <= 1600 ? msg.trim() : false;
 
     if (phone && msg) {
-        // Configure the Twilio service request payload
+        // Configure the  service request payload
         let payload = {
-            'From': config.twilio.fromPhone,
+            'From': config.sms.fromPhone,
             'To': phone,
             'Body': msg
         };
@@ -72,10 +72,10 @@ helpers.sendTwilioSms = function(phone, msg, callback) {
         // Configure request details
         let requestDetails = {
             'protocol': 'https:',
-            'hostname': 'api.twilio.com',
+            'hostname': process.env.SMS_HOSTNAME,
             'method': 'POST',
-            'path': '/2010-04-01/Accounts/' + config.twilio.accountSId + '/Messages.json',
-            'auth': config.twilio.accountSId + ':' + config.twilio.authToken,
+            'path': '/2010-04-01/Accounts/' + config.sms.accountSId + '/Messages.json',
+            'auth': config.sms.accountSId + ':' + config.sms.authToken,
             'headers': {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': Buffer.byteLength(payloadText)
@@ -92,7 +92,7 @@ helpers.sendTwilioSms = function(phone, msg, callback) {
             if (status === 200 || status === 201) {
                 callback(false);
             } else {
-                callback(`Twilio Send SMS: Twilio service replyed with status ${status} and message ${res.statusMessage}.`);
+                callback(`Send SMS: Sms service replyed with status ${status} and message ${res.statusMessage}.`);
             }
         });
 
@@ -107,7 +107,7 @@ helpers.sendTwilioSms = function(phone, msg, callback) {
         // Fire the request
         request.end();
     } else {
-        callback('Twilio Send SMS: Given parameters were missing or invalid.')
+        callback('Send SMS: Given parameters were missing or invalid.')
     }
 }
 

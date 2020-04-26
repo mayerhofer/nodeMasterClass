@@ -13,10 +13,10 @@ environments.staging = {
     'envName': 'staging',
     'hashingSecret': 'thisIsSecret',
     'maxChecks': 5,
-    'twilio': {
-        'accountSId': process.env.TWILIO_ACCOUNT_ID,
-        'authToken': process.env.TWILIO_AUTH_TOKEN,
-        'fromPhone': process.env.TWILIO_FROM_PHONE 
+    'sms': {
+        'accountSId': process.env.SMS_ACCOUNT_ID,
+        'authToken': process.env.SMS_AUTH_TOKEN,
+        'fromPhone': process.env.SMS_FROM_PHONE 
     }
 };
  
@@ -28,10 +28,10 @@ environments.production = {
     'envName': 'production',
     'hashingSecret': 'thisIsSecret',
     'maxChecks': 5,
-    'twilio': {
-        'accountSId': process.env.TWILIO_ACCOUNT_ID,
-        'authToken': process.env.TWILIO_AUTH_TOKEN,
-        'fromPhone': process.env.TWILIO_FROM_PHONE 
+    'sms': {
+        'accountSId': process.env.SMS_ACCOUNT_ID,
+        'authToken': process.env.SMS_AUTH_TOKEN,
+        'fromPhone': process.env.SMS_FROM_PHONE 
     }
 };
 

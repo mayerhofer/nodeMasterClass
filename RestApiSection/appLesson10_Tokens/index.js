@@ -11,7 +11,7 @@ var fs = require('fs');
 
 // @TODO GET RID OF THIS
 var helpers = require('./lib/helpers');
-helpers.sendTwilioSms(''/* real phone number for testing */, 'Hello! From my NodeJS learning exercise :)', function(err) {
+helpers.sendSms(process.env.SMS_TEST_PHONE, 'Hello AGAIN! From my NodeJS learning exercise :)', function(err) {
     console.log('this was the error', err);
 });
 
