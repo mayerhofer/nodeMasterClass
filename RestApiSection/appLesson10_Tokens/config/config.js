@@ -14,9 +14,9 @@ environments.staging = {
     'hashingSecret': 'thisIsSecret',
     'maxChecks': 5,
     'twilio': {
-        'accountSId': 'AC2bb742cbcabed443a8a1eadbd31ba07a',
-        'authToken': '601fa144a4849e954f963dfed5d8076f',
-        'fromPhone': '+15343443329'
+        'accountSId': process.env.TWILIO_ACCOUNT_ID,
+        'authToken': process.env.TWILIO_AUTH_TOKEN,
+        'fromPhone': process.env.TWILIO_FROM_PHONE 
     }
 };
  
