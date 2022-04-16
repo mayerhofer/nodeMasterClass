@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <!-- General Settings -->
+    <meta charset="utf-8">
+    <meta http-equiv="content-language" content="en-us">
+    <base href="{global.baseUrl}" />
+
+    <!-- Meta Tags -->
+    <title>{head.title} | {global.appName}</title>
+    <meta name="description" content="{head.description}">
+
+    <!-- Static Assets -->
+    <link type="image/x-icon" rel="icon" href="favicon.ico">
+    <script type="text/javascript" charset="utf-8" src="public/app.js"></script>
+    <link rel="stylesheet" type="text/css" href="public/app.css" />
+  </head>
+  <body class="{body.class}">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="menu__icon">
+        <div class="menu__icon_bar"></div>
+        <div class="menu__icon_bar"></div>
+        <div class="menu__icon_bar"></div>
+      </div>
+      <!-- Navigation -->
+      <ul class="menu">
+        <li>
+          <a href="/">Home</a>
+        </li>
+        <li>
+          <a class="loggedOut" href="#" onclick="return false;">Signup</a>
+        </li>
+        <li>
+          <a class="loggedOut" href="#" onclick="return false;">Login</a>
+        </li>
+        <li>
+          <a class="loggedIn" href="#" onclick="return false;">Dashboard</a>
+        </li>
+        <li>
+          <a class="loggedIn" href="#" onclick="return false;">Finance</a>
+        </li>
+        <li>
+          <a class="loggedIn" href="#" onclick="return false;">Account Settings</a>
+        </li>
+        <li>
+          <a class="loggedIn" href="#" onclick="return false;">Logout</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Page Wrapper -->
+    <div class="wrapper">
+
+        <!-- Logo -->
+        <a class="logo" href="/"></a>
+
+        
+
+      <!-- Page-Specific Content -->
+      <div class="content">
