@@ -6,6 +6,11 @@
 body {
   background-color: #3B3B58;
   color: #CF9893;
+  color: #BC7C9C;
+  color: #A96DA3;
+  color: #7A5980;
+  color: #3B3B58;
+  color: #CF9893;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -43,24 +48,35 @@ body {
   /* animation: menu .4s; */
   position: absolute;
   top: 15px;
-  transition: ( top 0.3s ease .3s, transform .3s ease-out .1s );
+  transition: ( transform .3s ease-out .1s, top 0.3s ease .3s );
 }
 .menu__icon .menu__icon_bar:nth-of-type(2) {
   /* animation: menu .4s; */
   position: absolute;
   top: 30px;
+  opacity: 1;
+  /* transition: opacity .3s; */
+  animation: (fadeIn 3s); /* cubic-bezier(.5, .2, .2, 1.01) */
 }
 .menu__icon .menu__icon_bar:nth-of-type(3) {
   /* animation: menu .4s; */
   position: absolute;
   top: 45px;
-  transition: ( top 0.3s ease .3s, transform .3s ease-out .1s );
+  transition: ( transform .3s ease-out .1s, top 0.3s ease .3s );
 }
 .menu__icon:hover .menu__icon_bar:nth-of-type(1) {
   /* animation: menu .4s; */
   top: 30px;
   transform: rotate(45deg);
   transition: ( top 0.3s ease .3s, transform .3s ease-out .1s );
+}
+@keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+@keyframes fadeOut {
+  0% {opacity:1;}
+  100% {opacity:0;}
 }
 /* @keyframes menu {
   100% {
@@ -73,17 +89,14 @@ body {
 } */
 .menu__icon:hover .menu__icon_bar:nth-of-type(2) {
   opacity: 0;
-  animation: (fade 2s cubic-bezier(.5, .2, .2, 1.01) );
+  /* animation: (fade 2s cubic-bezier(.5, .2, .2, 1.01) 3s );*/
+
+  animation: (fadeOut 3s);
 }
 .menu__icon:hover .menu__icon_bar:nth-of-type(3) {
   top: 30px;
   transform: rotate(-45deg);
   transition: ( top 0.3s ease .3s, transform .3s ease-out .1s );
-}
-
-.wrapper {
-  width: fit-content;
-  margin: 0;
 }
 
 /* Menu */
@@ -125,4 +138,158 @@ a:hover {
 }
 a:active {
   color: #BC7C9C;
+}
+
+/* APP */
+.wrapper, #app, .content {
+  width: fit-content;
+  margin: 0;
+}
+
+/* Table */
+.table {
+  background: white;
+
+  border-radius: 10px;
+  border-collapse: collapse;
+  border-color: gray;
+  border-spacing: 2px;
+
+  box-sizing: border-box;
+
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 0;
+}
+
+.table thead tr {
+  height: 60px;
+  background: #36304a;
+}
+.table tbody tr {
+  height: 50px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 15px;
+  color: #808080;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.table td:nth-child(1), .table th:nth-child(1) {
+  padding-left: 30px;
+}
+.table td:last-child, .table th:last-child {
+  padding-right: 30px;
+}
+
+.table td, .table th {
+  padding-left: 8px;
+  display: table-cell;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f5f5f5;
+}
+/* .table tbody tr td {
+  padding-left: 40% !important;
+  margin-bottom: 24px;
+} */
+.table tbody tr:hover {
+  background-color: #f5f5f5;
+  color: #555555;
+  cursor: pointer;
+}
+
+.table tr:last-child {
+  border: 0;
+}
+
+.pagination {
+  padding: 20px;
+  display: inline-flex;
+  justify-content: right;
+  width: fit-content;
+}
+
+.button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+/* Business: Finance Table */
+.cashflowTable {
+  width: 100%;
+  display: inline-block;
+  font-size: 22px;
+}
+.cashflowTable .cashflowRow:nth-child(even) {
+  background-color: #7A5980;
+}
+.cashflowRow {
+  width: 100%;
+  display: inline-flex;
+  min-height: 40px;
+  
+}
+.cashflowDate {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  width: 20%;
+  text-align: center;
+  padding: 0px 5px 0px 5px;
+}
+.cashflowProvider {
+  align-items: center;
+  display: inline-flex;
+  width: 50%;
+  padding: 0px 5px 0px 5px;
+}
+.cashflowAmount {
+  align-items: center;
+  display: inline-flex;
+  justify-content: flex-end;
+  text-align: right;
+  width: 20%;
+  padding: 0px 5px 0px 5px;
+}
+.financialHeader {
+  width: 100%;
+  display: flex;
+  text-align: center;
+}
+.financialLabel {
+  align-items: center;
+  display: inline-flex;
+}
+.cashflowButtonAdd {
+  margin-right: 0;
+  margin-left: auto;
+  background-color: transparent;
+  border: 3px;
+  border-radius: 30%;
+  color: #CF9893;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+}
+.cashflowButtonAdd span {
+  display: block;
+  height: 30px;
+  width: 30px;
+  line-height: 30px;
+
+  -moz-border-radius: 15px; /* or 50% */
+  border-radius: 15px; /* or 50% */
+
+  background-color: #7A5980;
+  text-align: center;
+  font-size: 2em;
+  font-weight: 700;
 }

@@ -33,15 +33,12 @@ function isEmpty(obj) {
  * @param {object} data - String, object or nothing: payload for response.
  */
 ResponseHandler.prototype.buildBasicResponse = function(httpStatus, contentType, data) {
-    console.log('chegou ate aqui')
 
     // Use status from handler, or default to 200
     var statusCode = typeof(httpStatus) == 'number' ? httpStatus : HTTP_STATUS.success;
 
     // Use content type from handler, or default to 'text/html'
     var type = typeof(contentType) == 'string' ? contentType : 'text/html';
-
-    console.log({type})
 
     // Use payload from handler, or default to empty object
     var payload;

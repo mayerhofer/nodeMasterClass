@@ -1,0 +1,41 @@
+.table {
+  background: white;
+
+  border-radius: 10px;
+  border-collapse: collapse;
+  border-color: gray;
+  border-spacing: 2px;
+
+  box-sizing: border-box;
+
+  margin: 0 auto;
+  overflow: hidden;
+  padding: 0;
+}
+
+.table thead tr {
+  height: 60px;
+  background: #36304a;
+}
+.table tbody tr {
+  height: 50px;
+  background: #36304a;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 15px;
+  color: #808080;
+  line-height: 1.2;
+  font-weight: unset;
+}
+
+.table td, .table th {
+  padding-left: 8px;
+  display: table-cell;
+}
+
+.table tbody tr:nth-child(even), .table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.table tr:last-child {
+  border: 0;
+}

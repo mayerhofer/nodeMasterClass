@@ -135,6 +135,25 @@ helpers.getTemplate = function(templateName, data, callback) {
     }
 }
 
+// Get dynamic contents of an asset
+// TODO: First implemented for CSS, later Java and finally HTML
+// TODO: I need to start with HTML so to identify witch CSS and JS elements to load.
+// React inspired use of web components
+helpers.render = function(callback) {
+    // We always start from index.html
+    fs.readFile(path.join(__dirname, '/../templates/index.html'), function(err, str) {
+        if (!err && str) {
+            let auxIndex = str.indexOf('<');
+            let auxEndIndex = str.substring(auxIndex + 1).indexOf(' ');
+            let word = 's'.substring(auxIndex + 1, auxEndIndex);
+
+
+        } else {
+            callback('Main index file not found.');
+        }
+    });
+}
+
 // Get the contents of a static public asset
 helpers.getStaticAsset = function(fileName, callback) {
     fileName = typeof(fileName) == 'string' && fileName.length > 0 ? fileName : false;

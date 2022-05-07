@@ -7,6 +7,9 @@ var _checks = require('./check');
 var helpers = require('../lib/helpers');
 var config = require('../config/config');
 
+var builder = require('../templates/components/table');
+const RestAPI = require('../services/jsonApi');
+
 
 // Define the handlers
 var handlers = {};
@@ -79,31 +82,65 @@ handlers._users = {};
 
 handlers.index = function(data, callback) {
     if ('get'.localeCompare(data.method, undefined, { sensitivity: 'accent' }) === 0) {
+        // let api = new RestAPI('cashflow');
 
-        let templateData = {
-            'head.title': 'This is the title',
-            'head.description': 'This is the meta description',
-            'body.title': 'Hello templated world!',
-            'body.class': 'index'
-        }
+        // api.get().then(data => {
+        //     const props = {
+        //         className: 'table',
+        //         columns: ['Date', 'Provider', 'Description', 'Amount', 'Location', 'Book'],
+        //         data: data.filter(cf => (new Date(cf.date)).getFullYear() > 2020).map(cf => {
+        //             const currencyFormatter = new Intl.NumberFormat('en-US', {
+        //                 style: 'currency',
+        //                 currency: cf.currency,
+        //                 minimumFractionDigits: 2,
+        //             });
 
-        helpers.getTemplate('index', templateData, function(err, str) {
-            if (!err && str) {
-                //callback(200, 'text/html', '<html><body><h1>Hello World, from Ricardo++!</h1></body></html>');
+        //             return {
+        //                 Date: (new Date(cf.date)).toISOString().substring(0, 10),
+        //                 Provider: cf.provider,
+        //                 Description: cf.description,
+        //                 Amount: currencyFormatter.format(cf.amount),
+        //                 Location: cf.location,
+        //                 Book: cf.book,
+        //             };
+        //             // "direction": "false",
+        //             // "labels": [
+        //             //     "Transport",
+        //             //     "Work"
+        //             // ],
+        //             // "elementId": 432
+        //         }),
+        //     };
 
-                // Add the universal header and footer
-                helpers.addUniversalTemplates(str, templateData, function(err, str) {
-                    if (!err && str) {
-                        callback(200, 'text/html', str);
-                    } else {
-                        callback(500, 'text/html', undefined);
-                    }
-                });
-            } else {
-                // TODO: define an error page for this scenario
-                callback(500, 'text/html', undefined);
+        //     let table = builder(props);
+
+            let templateData = {
+                'head.title': 'This is the title',// + table,
+                'head.description': 'This is the meta description',
+                'body.title': 'Hello templated world!',
+                'body.class': 'index'
             }
-        });
+
+            helpers.getTemplate('index', templateData, function(err, str) {
+                if (!err && str) {
+                    //callback(200, 'text/html', '<html><body><h1>Hello World, from Ricardo++!</h1></body></html>');
+    
+                    // Add the universal header and footer
+                    helpers.addUniversalTemplates(str, templateData, function(err, str) {
+                        if (!err && str) {
+                            callback(200, 'text/html', str);
+                        } else {
+                            callback(500, 'text/html', undefined);
+                        }
+                    });
+                } else {
+                    // TODO: define an error page for this scenario
+                    callback(500, 'text/html', err);
+                }
+            });
+        // }).catch(err => {
+        //     callback(500, 'text/html', err);
+        // });
     } else {
         // TODO: define an error page for this scenario
         callback(405, 'text/html');
@@ -117,7 +154,6 @@ handlers.public = function(requestData, callback) {
         // Get the file name being requested
         let trimmedAssetName = requestData.trimmedPath.replace('public/', '').trim();
 
-        console.log(' passei aki ao menos')
         if (trimmedAssetName.length > 0) {
             // Read in the asset's data
             helpers.getStaticAsset(trimmedAssetName, function(err, data) {
@@ -171,6 +207,7 @@ var router = {
     'checks/edit': handlers.checksEdit,
     // GUI Static handlers
     'public/app.css' : handlers.public,
+    'public/app.js' : handlers.public,
 };
 
 module.exports = router;
