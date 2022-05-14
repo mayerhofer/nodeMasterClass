@@ -44,12 +44,11 @@ const buildLogObj = (logText) => {
 }
 
 const convert = (item, route) => {
-  const filter = { entity: route, _id: item._id, userId: item.userId };
   const obj = route === 'errorLog' ?
       buildLogObj(item) :
-      item.data;
+      item;
 
-  return Object.assign(obj, filter);
+  return obj;
 }
 
 class ResponseHelper {
@@ -93,12 +92,36 @@ class ResponseHelper {
 
 // Server - APIs - End Base/Util
 // Server - APIs - JSON API
-const endpoint = "http://localhost:3002/entities";
+const endpoint = "http://localhost:3002/";
+const endpointCountries = "http://localhost:3004/countries";
 
-async function apiOperation(path, element, method, data) {
+class CountryAPI {
+  static async getAll() {
+    let response = new ResponseHelper(await fetch(endpointCountries, {method: 'GET'}));
+
+    if (response.hasOkStatus()) {
+      return await response.jsonToArray();
+    } else {
+      return [];
+    }
+  }
+  static async getByName(name) {
+    let response = new ResponseHelper(await fetch(endpointCountries + '/name/' + name, {method: 'GET'}));
+
+    if (response.hasOkStatus()) {
+      return await response.json();
+    } else {
+      return [];
+    }
+  }
+}
+
+CountryAPI.getByName('Italy').then(data => console.log(data));
+
+async function apiOperation(path, element, method) {
   let fetchOptions = {method};
   if (['POST', 'PUT'].includes(method)) {
-    fetchOptions = Object.assign({}, {body: JSON.stringify(data), headers: {'Content-Type': 'application/json'}}, fetchOptions);
+    fetchOptions = Object.assign({}, {body: JSON.stringify(element), headers: {'Content-Type': 'application/json'}}, fetchOptions);
   }
   let response = new ResponseHelper(await fetch(path, fetchOptions));
 
@@ -109,20 +132,10 @@ async function apiOperation(path, element, method, data) {
   throw response.buildError(response);
 }
 
-let operationData = (element, route) => {
-  let data = element;
-  let res = {_id: element._id, entity: route, data: data, userId: element.userId};
-
-  delete data._id;
-  delete data.entity;
-
-  return res;
-}
-
 class RestAPI {
   constructor(route, profile) {
     this.route = route.trim();
-    this.path = endpoint;
+    this.path = endpoint + this.route;
     this.profile = profile
   }
 
@@ -132,25 +145,21 @@ class RestAPI {
     apiOperation(_path, element, 'DELETE');
   }
  async insert(element) {
-    let data = operationData(element, this.route);
-
-    apiOperation(this.path, element, 'POST', data);
+    apiOperation(this.path, element, 'POST');
   }
   async update(element) {
     const _path = `${this.path}/${element._id}`;
-    let data = operationData(element, this.route);
 
-    apiOperation(_path, element, 'PUT', data);
+    apiOperation(_path, element, 'PUT');
   }
 
   async get() {
-    const filter = this.route;
-    const _path = this.path + '?entity=' + filter;
+    const _path = this.path;
     const fetchOptions = {method: 'GET'};
 
-    let response = new ResponseHelper(await fetch(_path, fetchOptions), filter);
+    let response = new ResponseHelper(await fetch(_path, fetchOptions), this.route);
     if (response.hasOkStatus()) {
-      let res = (filter === 'errorLog' ? await response.textToArray() : await response.jsonToArray());
+      let res = (this.route === 'errorLog' ? await response.textToArray() : await response.jsonToArray());
       return res;
     }
     
@@ -228,18 +237,18 @@ const parseHtmlToElement = function(id, str) {
 }
 class TreeNode {
   constructor(value, parent, ancestral) {
-    if (!(value instanceof RComponent)) {
-      throw 'Argument "value" must be not null and an instance of a class that extends RComponent.';
+    if (value !== 'app' && !(value instanceof RComponent)) {
+      throw 'Argument "value" must be not null and an instance of a class that extends RComponent. Except if it is the root.';
     }
-    if (typeof parent !== 'string' || parent.trim().length <= 0) {
+    if (value !== 'app' && (typeof parent !== 'string' || parent.trim().length <= 0)) {
       // DOM cannot be verified, since rendering usually is not finished once you mount a component.
-      throw 'Argument "parent" must be a valid string with the parent HTMLElement id.';
+      throw 'Argument "parent" must be a valid string with the parent HTMLElement id. Except if it is the root';
     }
-    if (parent === 'app' && ancestral) {
-      throw 'Argument "ancestral" must be null/undefined when node is the root element.';
+    if (value === 'app' && ancestral) {
+      throw 'Argument "ancestral" must be null/undefined when node or parent is the root element.';
     }
-    if (!(parent === 'app' || ancestral instanceof TreeNode)) {
-      throw 'Argument "ancestral" must be the parent TreeNode/Component, unless node is the root element. Element design id: ' + value.props.id;
+    if (!(value === 'app' || ancestral instanceof TreeNode)) {
+      throw 'Argument "ancestral" must be the parent TreeNode/Component, unless node or parent is the root element. Element design id: ' + value.props.id;
     }
     this.value = value;
     this.parent = parent;
@@ -273,6 +282,9 @@ class TreeNode {
     if (typeof this.value.props.id === 'string' && this.value.props.id.trim().length > 0) {
       // TODO: This can still generate repeated ids, change this solution for IDs.
       this.value.id = this.value.props.id + '_' + (Math.random()*100000).toFixed();
+      console.log(window.application.registeredComponents)
+      console.log(this)
+      console.log('registering: ' + this.value.id)
       window.application.registeredComponents[this.value.id] = this;
     } else {
       throw 'Invalid RComponent: property id is missing or invalid.';
@@ -282,6 +294,7 @@ class TreeNode {
   unregister() {
     if (typeof this.value.id === 'string' && this.value.id.trim().length > 0) {
       if (window.application.registeredComponents[this.value.id]) {
+        console.log('unregistering: ' + this.value.id)
         delete window.application.registeredComponents[this.value.id];
       }
     } else {
@@ -305,9 +318,75 @@ class RComponent {
     tablePagination: '<div id="{pagination.id}" class="pagination"><span>Rows per page:&nbsp;</span>{pagination.cbRowsPerPage}{pagination.carrosel}</div>',
     container: '<div id="{container.id}" class="{container.className}">{container.content}</div>',
     th: '<th id="{cell.id}">{cell.children}</th>',
+    simple_li_click: '<li onclick="{li.click}">{li.content}</li>',
     thead: '<thead id="{row.id}"><tr id="th{row.id}">{row.content}</tr></thead>',
     form: '<form id="{form.id}" class="{form.className}" onsubmit="window.application.callHandler(this,\'{form.id}\')">{form.fields}</form>',
     textField: '<div id="{text.id}" class="{text.className}"><label for="{this.inputId}">{text.name}</label><input type="text" id="{this.inputId}" onchange="window.application.callHandler(this,\'{text.id}\')" /></div>',
+    simpleTextField: `<div id="{field.id}" class="container">
+    <div class="textfield">
+      <label for="{field.id}Input" class="field-label {filed.hideLabel}">{field.label}</label>
+      <input id="{field.id}Input" type="text" maxlength="30" placeholder="{field.label}" onchange="window.application.callHandler(this,\'{field.id}Change\');" onfocus="window.application.callHandler(this,\'{field.id}Focus\');" onblur="window.application.callHandler(this,\'{field.id}Blur\');" value="{field.value}" />
+      <div class="containerIcon">
+        <div id="{field.id}InputErrorIcon" class="invalidIcon {field.hideError}" onmouseover="displayInvalidTooltip">!</div>
+      </div>
+    </div>
+    <div id="{field.id}InputTooltip" class="tooltip {field.hideError}">* Invalid text</div>
+  </div>`,
+    amountField: `<div id="{field.id}" class="container">
+    <div class="textfield">
+      <div class="amount-currency-container">
+        <div class="currency-dropdown">
+          <label>{field.currency}</label>
+          <div class="currency-dropdown-content">
+            {field.currencyList}
+          </div>
+        </div>
+      </div>
+      <label for="{field.id}Input" class="field-label hide">{field.label}</label>
+      <input id="{field.id}Input" class="amount-input" type="number" maxlength="30" placeholder="{field.label}" onchange="handleChange(this)" onfocus="handleFocus(this)" onblur="handleBlur(this)" />
+      <div class="direction-container">
+        <ul class="direction">
+          <li class="direction-option">
+            <input type="radio" id="income" name="direction" value="income" alt="Income" {field.incomeChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
+            <label for="income">
+              <img class="img-swap" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAADmElEQVR4nO2bS0hUURjHf41KYmgZBRE9QFqUPaQgohZRYJsgCCMzCtJVQdEm0iAMKloEQbSIiGhVUBG0iB6IC5WgZS1UKowIo4VZCL1MMm1xZnDOQWfuedxzRq8/ODhX7vnu//vu3O9+5zGQPNYB3cBHYG9gLd4pQTg/nm79YeX4p4UJ58eB3rBy/LIC+IkcgLqgijzzGNn552Hl+GUfsvO/gKqgijxSDnxCDkBLUEWeuYrsfA/ibZAINgB/mXB+DNgRVJFHUsBL5Lt/K6gizxxHdv4rsCioIo8sAYaQA3BkshPneBSlSyvQAJQa9C0HFmcddwE7EYGYFhxGvns2bQRY41e+HaWIkZqrAFzMdbHiODyw5CSwMuv4OyKB6TIKtAEXXIjyRSXwDfkO1gZV5JlryM4/DSvHL1XAHyacH0XM3iSGhyS4atuCqNMzzv8GlgVV5JkXyHf/fFg5fqlDdn4AqAiqyCMlwDvkABwNqsgzJ5Cdf4vn4szFxVZjlrBSwDnlf82I19+04QruavYuz9qt2Y786rJpY8BWv/LtmAu8wd3dD1b0mOaAZsSzn6EfuGdoqwe4b9jXGpMZoVWIBcbsmZo9wBMniqKxELiU1mLKEIZD5Tbkr+8jCxGm3MDNo6e9ONqgGPgBLLdyxYwO3ARgXOeiFcBnpfMpa1fMCBKA60rHbsItMakBiL3vZkSFlun0D9imeWGXOAtAKkKHIuBm+m+G24hlp2lPlDrgGLAx63gQOBPRfhmwCbPFDRBTZK8QEyS50Jk4rdQRMB/hcPbXbdIlpiku9B79pKS2PmCBYttbElR3VnQRvXiqdyhyf1wByJcDXgPD6c/DiMchatIpi3heFOY5tCWRLwd8QExY7gLaEQMgU54hXp1RWA/s1rB9WePcg4gdY7HTiPx1a3TY1+trcEaT+AAUI563VjTfjwp9wFnEEHMqTgOHItpbqnn9do1za7IPioEH2G8gqEU8U8dznFOdbnFgvIKcwt3uibici5XE5wA1AJ2ISi9q06FJw26Tpm0dzZ3ZHWe/AaEFhEYthSuJb09OtYZt3YRqNRx2NWLrUOyq5axNy1cKxzYanPEkPgBqDtBd4tL55UXBDodzPcf50MkBs8PhQiTxAVBzQA16Q0sdCnY4nE3chVBBDocHHYlQ7biyC/BFOTbZPj+l3QPpDzYVVQ+wVjFeBNxF/GLD1O4IcAd5WQ7EJupeS80DQP1/Q7c2KrewnUoAAAAASUVORK5CYII="/>
+            </label>
+          </li>
+          <li class="direction-option">
+            <input type="radio" id="expense" name="direction" value="expense" alt="Expense" {field.expenseChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
+            <label for="expense">
+              <img class="img-swap" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAABGUlEQVRIie3UPUvDUBQG4Ad161AQXfwCQTo66yIiDoqO4tw/UcRd0NH/4OBmB0HE2UkQBAdxbV0cHBShqGAdjBSKtyRtLnTICweS3JDncLk5FCkyBNnCE9oDVhObWeBmDuhfNULINk7wgPfk5agZx3mgy2hZwGOCvKCGRUxgNNDMIAWW8Zw8uMPcP43lDu+ildycoRTYkdzh7+TiECMBNAr8gWoPMAR/4hhTmMFFVnglBdoN11HpWp/NCqdNG7dYDazPx4KrwmeghMtYcCgV3GdEgyMzbXbw2ge60S84hiOdX7GOct/tp8w0rhPwC3uxQVjXGa0NLMXEyljDqc7WXmFy0A9nORgt7Os9WnOD33CDA7+jsUiR4c4PF/oFIjYEfRAAAAAASUVORK5CYII="/>
+            </label>
+          </li>
+        </ul>
+      </div>
+      <div class="containerIcon">
+        <div id="{field.id}InputErrorIcon" class="invalidIcon hide" onmouseover="displayInvalidTooltip">!</div>
+      </div>
+    </div>
+    <div id="{field.id}InputTooltip" class="tooltip hide">* Invalid text</div>
+  </div>`,
+    dateTextField: `<div id="{field.id}" class="container container-date">
+    <div class="textfield">
+      <label for="{field.id}Input" class="field-label">{field.label}</label>
+      <input id="{field.id}Input" type="date" maxlength="30" placeholder="{field.label}" onchange="handleChange(this)" />
+    </div>
+    <div id="{field.id}InputTooltip" class="tooltip hide">* Invalid text</div>
+  </div>`,
+    flag: '<img id="{img.id}" title={img.title} onClick="window.application.callHandler(this,\'{img.id}\')" alt="{img.title}" src="data:image/png;base64,{img.imgBase64}" />',
+    countryField: `
+    <div id="{field.id}" class="country-dropdown">
+      {country.selected}
+      <div class="country-dropdown-content">
+        {country.list}
+      </div>
+    </div>`,
+    save: `
+      <button id={save.id} class="{save.className}" onclick="window.application.callHandler(this, '{save.id}')" {save.disabled}> 
+      <img
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAADt0lEQVRoge2YvWsUQRjGn9m7fBg/iJLEJo2NAbFRtPQfSCEpFOwshPSpYhMUq4CojQr+C4JRCyWNgqAgsVUkhSAYNGcgGtDkEnPvY7E7u7Ozs7O3J5tEuBfm9m5m7+b3zPsxswd0rWtd69pumsobOPNydZxUD0iMEgBArC4343FuNfH+wgigFBQAAgAJkhDzKgIRQihgdBUhRAQtEUjciImFLdQOHflJUTc+TgzfaUdAkDdgw4eEaQthjGbAkwQluoIgEfUjHgeTn6Z+JQahePvE48b1dgTU8wWk4R38EAknVUqFq48IDkjgjXb6/uvU999cORuCh6pAPQkBUera2JPv/YsTI1d9AvI9YMO7PCAShopefQ0tAjJsYngiu0g0vJJMrN8qcnpsrjHbkYAieAARtBlCOr6ZhJMkYZUvIAkpJoORCkwfn1ueKi+gAB5AnHy6UYuwhNArQIcdM/B6fgU1k8eQnwMWvBNAomlVci9jz6UTVkSyC2B7wAEfdR0uLaAIHgg9EMInChjNbMLrkpqZglFZjUPICQ9fGOQLKIAHwhW0XaXvTycoQWY9YFaqsKKVgy8UYMK7dLjCwtzQ4rKakwM6V2jc74T3aPDsA354qADL6y2M9CebuZmEjPMgaa8unzIqk8QeEApWmoxxbHifDzxl1IInEAQJrKr34OaHJr6tb2eOBa24pEqmUqXKrYbfIO59DhD07XPDd+IBGx4A+g/UsPGrBQoBpfDu9wAuvf0DcLtoHbRsADVHt0JvXx1BX28peK8AG54g6vUABweDdEix1wgde9L08SCvziddbvjOQ8iq7Slh0YcdgfdUQu9OvNfh/QL+A3ivgL0E79NRHEJ7GN4vYC/Be0QUl1EL/txQD2ZODmCkT8UPNOaJ0/fZPPfYfY2m4NanGhbWggw8PQoKd2J75f8dPtsvIhjqIaaObZeCB4pOo46wqQJevx/qsUPRjC23eZLYHfNVwacfatqD9wrIS9gq4ZPn4jR8Z2XUAR9Wm+rgRaQUvF9ATqmsFJ7l4L0C8up8lfA6hGx4epQU7sSZTapCeA3aLrxfgAseqBQ+bO3DFwjIwusfrQre/JMgBd9JFXLBo2L4JITS8D4/FJbRr4/m0Xj4NDmYVQhv5sGP+RdYe/bcKiZlBETKg9YmatubumtH4GHOW6DA99/oEoDRoxfPx/Ag0GgSw73VwK9sqXjyQ+Pj8aQkvpT2gBCT+ovmIswutrDclErg7y7ttzbQEF4UJ3Nd0LWuda1ru2p/ASsCdZ0lM904AAAAAElFTkSuQmCC"/>
+      </button>
+    `,
   };
 
   setState(newState) {
@@ -326,6 +405,7 @@ class RComponent {
     }
   }
   mount(parent, ancestral) {
+    console.log('mounting: ' + this.props.id);
     // Register component in Virtual DOM Tree.
     let found = this.id ? window.application.registeredComponents[this.id] : false;
     if (! found) {
@@ -344,6 +424,7 @@ class RComponent {
   }
   update() {
     const tNode = window.application.registeredComponents[this.id];
+    console.log(this.id, window.application.registeredComponents)
     const parent = tNode.parent;
     if (parent) {
       const child = window.document.getElementById(this.id);
@@ -624,7 +705,9 @@ class FinanceTable extends RComponent {
     return this.fill('simplediv', {className: 'cashflowRow', content: date + provider + amount});
   }
   handleAddNew() {
-    // TODO: Implement call form for new cashflow
+    if (typeof this.props.callInput === 'function') {
+      this.props.callInput(this);
+    }
   }
   render() {
     // date: 30%, provider: 50%, amount: 20%
@@ -695,21 +778,299 @@ class TextField extends RComponent {
     // handle? How?
   }
   render() {
-    //
-    const textField = '<div id="{text.id}" class="{text.className}"><label for="{this.inputId}">{text.name}</label><input type="text" id="{this.inputId}" onchange="window.application.callHandler(this,\'{text.id}\')" /></div>';
-
-    const inputId = this.id + 'input';
-    const name = this.props.name;
-
-    this.registerHandler(this.id, this.handleChange.bind(this));
+    //this.registerHandler(this.id, this.handleChange.bind(this));
+    console.log(this.props)
     
-    this.fill('textField', {id: this.id, inputId, name, className});
+    return this.fill('simpleTextField', {id: this.id, label: this.props.label});
+  }
+}
+const currencies = {
+  'EUR': '&euro;', // €
+  'USD': '&dollar;', // $
+  'GBP': '&pound;', // £
+  'PLN': 'Z&#322;', // Zł
+  'BRL': 'R&dollar;', // R$
+  'CZK': 'K&#269;', // Kč
+};
+class FinanceForm extends RComponent {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      country: this.props.country ?? 'Spain',
+      currency: this.props.currency ?? 'EUR',
+      date: this.props.date ?? new Date(),
+      direction: this.props.direction ?? false,
+      countries: this.props.countryImg ?? undefined,
+      description: this.props.description ?? '',
+      provider: this.props.provider ?? '',
+      labels: this.props.labels ?? [''],
+      book: this.props.book ?? '',
+      saveDisabled: false,
+    };
+  }
+
+  // Load data necessary for this form
+  componentDidMount() {
+    // Inside asynchronous methods, context of this is lost.
+    let form = this;
+
+    // Load flags only if not already loaded to avoid infinite loop
+    if (!form.state.countries) {
+      // Countries list in DB is huge but not necessary here in this form. Best to change source code to add countries when required.
+      const uniqueCountries = ['Poland', 'Italy', 'Scotland', 'Brazil', 'Spain'];
+      // Istead of getting all and then filtering, better to make multiple requests since we don't need many countries.
+      Promise.all(uniqueCountries.map(c => CountryAPI.getByName(c))).then(data => {
+        // Result returns one array with each object. Combine them in a single array removing undefined results.
+        let countries = data.flat().filter(item => item !== undefined);
+
+        form.setState({countries});
+      });
+    }
+  }
+
+  getFlagProps() {
+    const found = this.state.countries ? this.state.countries.find(c => c.name === this.state.country) : undefined;
+    const flag = found ? found.flag : '';
+
+    return {id: this.state.country, imgBase64: flag};
+  }
+
+  handleCountryUpdate(e) {
+    this.setState({country: e.title});
+  }
+  handleCurrencyUpdate(e) {
+    this.setState({currency: e.title});
+  }
+
+  buildCountryProps(c) {
+    let id = this.id + c.name.replace(/\s/g, '');
+    this.registerHandler(id, this.handleCountryUpdate.bind(this));
+
+    return {id, title: c.name, imgBase64: c.flag};
+  }
+
+  handleFlowChange(e) {
+    console.log(e.id, e.checked);
+
+    this.setState({direction: e.id === 'expense' ? false : true});
+  }
+  handleUpdateDate(e) {
+    //
+  }
+  handleGeneralUpdate(e) {
+    console.log('handling update of: ' + (e ? e.id : '??'));
+    console.log(e ? 'e is defined' : 'e is undefined');
+    console.log(e && e.target ? 'e has target' : 'e does not have target');
+    console.log(e && e.target ? 'value: ' + e.target.value : e ? e.value : 'cannot read value with no target or event')
+
+    let newValue = e.value;
+    if (e.id.indexOf('Desc') >= 0) {
+      this.setState({description: newValue});
+      return;
+    } else if (e.id.indexOf('Provider') >= 0) {
+      this.setState({provider: newValue});
+      return;
+    } else if (e.id.indexOf('Label') >= 0) {
+      this.setState({labels: [newValue]});
+      return;
+    } else if (e.id.indexOf('Book') >= 0) {
+      this.setState({book: newValue});
+      return;
+    }
+  }
+  handleUpdateAmount(e) {
+    // 
+  }
+
+  handleSave() {
+    // TODO: Finish creating CF object
+    let newCashFlow = {
+      currency: this.state.currency,
+      location: this.state.country,
+      direction: this.state.direction,
+      provider: this.state.provider,
+      description: this.state.description,
+      labels: this.state.labels,
+      book: this.state.book,
+    };
+
+    console.log('saving', newCashFlow);
+
+    // TODO: Call RestAPI.insert
+  }
+
+  render() {
+    const strDisabled = this.state.saveDisabled ? 'disabled' : '';
+    const currencyHtml = currencies[this.state.currency] ?? '?';
+    const mapCountry = c => this.fill('flag', this.buildCountryProps(c));
+    const currencyListKeys = Object.keys(currencies);
+    const currencyList = [];
+    const amountProps = {
+      id: this.id + 'Amount',
+      label: 'Amount', 
+      currency: currencyHtml, 
+      currencyList: currencyList.join(''), 
+      expenseChecked: this.state.direction ? '' : 'checked', 
+      incomeChecked: this.state.direction ? 'checked' : '',
+    };
+    this.registerHandler(this.id + 'Amount' + 'Dir', this.handleFlowChange.bind(this));
+
+    currencyListKeys.forEach(key => {
+      let id = this.id + key;
+      this.registerHandler(id, this.handleCurrencyUpdate.bind(this));
+      currencyList.push(`<label id="${id}" title="${key}" onclick="window.application.callHandler(this,'${id}')">${currencies[key]}</label>`)
+    });
+
+    this.registerHandler(this.id + 'save', this.handleSave.bind(this));
+
+    let date = this.fill('dateTextField', {id: this.id + 'Date', label: 'Date'});
+    let country = this.fill('countryField', {
+      id: this.id + 'country', 
+      selected: this.fill('flag', this.getFlagProps()),
+      list: this.state.countries ? this.state.countries.map(mapCountry).join('') : '',
+    });
+    let provider = this.fill('simpleTextField', {id: this.id + 'Provider', label: 'Provider', value: this.state.provider});
+    let description = this.fill('simpleTextField', {id: this.id + 'Desc', label: 'Description', value: this.state.description});
+    let amount = this.fill('amountField', amountProps);
+    let labels = this.fill('simpleTextField', {id: this.id + 'Labels', label: 'Labels', value: this.state.labels[0]});
+    let book = this.fill('simpleTextField', {id: this.id + 'Book', label: 'Book', value: this.state.book});
+    let save = this.fill('save', {id: this.id + 'save', disabled: strDisabled, className: 'financeSave'});
+
+    this.registerHandler(this.id + 'Date', this.handleUpdateDate.bind(this));
+    this.registerHandler(this.id + 'Desc', this.handleGeneralUpdate.bind(this));
+    // TODO: call specific handlers addressing editing changes with effects, validation and state change.
+    this.registerHandler(this.id + 'ProviderChange', this.handleGeneralUpdate.bind(this));
+    this.registerHandler(this.id + 'ProviderFocus', this.handleGeneralUpdate.bind(this));
+    this.registerHandler(this.id + 'ProviderBlur', this.handleGeneralUpdate.bind(this));
+    this.registerHandler(this.id + 'Amount', this.handleUpdateAmount.bind(this));
+    this.registerHandler(this.id + 'Labels', this.handleGeneralUpdate.bind(this));
+    this.registerHandler(this.id + 'Book', this.handleGeneralUpdate.bind(this));
+
+    let containerProps = {
+      id: this.id, 
+      className: 'page', 
+      content: [save, date, country, amount, provider, description, labels, book].join(''),
+    };
+    return this.fill('container', containerProps);
+  }
+}
+const props = {
+  required: true,
+  restricted: true,
+  options: [
+    'one',
+    'two',
+    'three',
+  ],
+};
+
+function isEmpty(field) {
+  let val = field.value;
+  return typeof val !== 'string' || val.trim().length <= 0;
+}
+function getLabelFrom(field) {
+  var labels = document.getElementsByTagName('label');
+  for( var i = 0; i < labels.length; i++ ) {
+    if (labels[i].htmlFor == field.id) {
+      return labels[i];
+    }
+  }
+}
+
+function isValid(field) {
+  let hasValue = ! isEmpty(field);
+  let isInOptions = props.options.indexOf(field.value) >= 0;
+  
+  if (props.required && props.restricted) {
+    return isInOptions;
+  } else if (props.required) {
+    return hasValue;
+  } else if (props.restricted) {
+    return isInOptions || !hasValue;
+  } else {
+    return true;
+  }
+}
+
+function handleChange(dispatcher) {
+  let divElem = dispatcher.parentElement; 
+  let labelElem = getLabelFrom(dispatcher);
+  let tooltip = window.
+    document.
+    getElementById(dispatcher.id+'Tooltip');
+  let icon = window.
+    document.
+    getElementById(dispatcher.id+'ErrorIcon');
+  
+  let bContainInvInput = dispatcher
+        .classList
+        .contains('invalidInput');
+  let bIsInvalid = ! isValid(dispatcher);
+  
+  if (bIsInvalid) {
+    tooltip.innerHTML = isEmpty(dispatcher) ? '* Required Field' : '* Not a valid option.';
+  }
+  
+  if ((bIsInvalid && !bContainInvInput) || (!bIsInvalid && bContainInvInput)) {
+    dispatcher.
+      classList.
+      toggle('invalidInput');
+    
+    divElem.
+      classList.
+      toggle('invalidDiv');
+    
+    labelElem.
+      classList.
+      toggle('invalidLabel');
+    
+    tooltip.
+      classList.
+      toggle('hide');
+    
+    if (icon) {
+      icon.
+        classList.
+        toggle('hide');
+    }
+  }
+}
+
+function handleFocus(dispatcher) {
+  let label = getLabelFrom(dispatcher);
+  
+  label.
+    classList.
+    remove('hide');
+
+  dispatcher.placeholder = '';
+}
+
+function handleBlur(dispatcher) {
+  let label = getLabelFrom(dispatcher);
+  
+  if (isEmpty(dispatcher)) {
+    label.
+      classList.
+      add('hide');
+    dispatcher.placeholder = label.innerHTML.trim();
+  } else {
+    label.
+      classList.
+      remove('hide');
+
+    dispatcher.placeholder = '';
   }
 }
 // Page - Components - End Form Text Field
 
 
 var loadApp = function() {
+
+  // Register root node
+  window.application.registeredComponents['app'] = new TreeNode('app');
+
   let api = new RestAPI('cashflow');
 
   api.get().then(data => {
@@ -749,13 +1110,27 @@ var loadApp = function() {
 
     // window.document.getElementById('app').innerHTML = mountedContainer;
 
+    
+    //const myInput = new TextField({id: 'provider', label: 'Provider'});
+
+    const callInput = (lastpage) => {
+      lastpage.unmount();
+
+      const myInput = new FinanceForm({id: 'fincForm'});
+      const strInput = myInput.mount('app', 'app');
+
+      
+      window.document.getElementById('app').innerHTML = strInput;
+    };
     const props = {
       data,
       id: 'cfMainTable',
-      
+      callInput,
     };
-    window.document.getElementById('app').innerHTML = (new FinanceTable(props)).mount('app');
+    const tableComp = (new FinanceTable(props));
 
+    const strTable = tableComp.mount('app', 'app');
+    window.document.getElementById('app').innerHTML = strTable;
   }).catch(err => {
     window.document.getElementById('app').innerHTML = err;
     //callback(500, 'text/html', err);
