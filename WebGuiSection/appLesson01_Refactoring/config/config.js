@@ -20,7 +20,7 @@ environments.staging = {
     },
     'templateGlobals' : {
         'appName' : 'UpdateChecker',
-        'companyName' : 'NotARealCompany, Inc',
+        'companyName' : 'Ricardo, Inc',
         'yearCreated': '2022',
         'baseUrl' : 'http://localhost:3000'
     }
