@@ -228,6 +228,13 @@ a:active {
   display: inline-block;
   font-size: 16px;
 }
+.buttons {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: right;
+}
 
 /* Business: Finance Table */
 .cashflowTable {
@@ -338,6 +345,50 @@ a:active {
   color: white;
   font-family: Roboto, sans-serif;
 }
+.datefield {
+  background-color: #3B3B58;
+  border-bottom: 4px solid #7A5980;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  height: 50px;
+  margin: 0;
+  padding: 0;
+  width: 90%;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+.datefield .field-label {
+  color: #7A5980;
+  background-color: transparent;
+  position: absolute;
+  left: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: 1s;
+  opacity: 0;
+  pointer-events: none;
+}
+.datefield input {
+  background-color: transparent;
+  height: 45px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 90%;
+  padding-left: 8px;
+  color: #7A5980;
+  letter-spacing: 0.04em;
+  font-size: 18px;
+  font-weight: 600;
+  position: relative;
+  top: 10px;
+  left: 5px;
+  /* margin-left: -65;*/
+}
 .textfield {
   background-color: #3B3B58;
   border-bottom: 4px solid #7A5980;
@@ -354,6 +405,7 @@ a:active {
   justify-content: flex-start;
   flex-direction: column;
 }
+
 .textfield .field-label {
   color: #7A5980;
   background-color: transparent;
@@ -378,7 +430,7 @@ a:active {
   font-size: 18px;
   font-weight: 600;
   position: relative;
-  top: 20px;
+  top: 25px;
   left: 5px;
   /* margin-left: -65;*/
 }
@@ -461,6 +513,9 @@ a:active {
   background-color: #3B3B58;
   margin-right: 20px;
   margin-left: auto;
+  padding: 0;
+  width: 55px;
+  height: 55px;
 }
 /* ***************************************************************** */
 /* ***************************************************************** */
@@ -473,6 +528,25 @@ a:active {
   border: 1px solid;
   border-radius: 48px;
   display: inline-block;
+}
+.country-hide {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: visibility 0s, opacity 0.5s linear !important;
+}
+.country-blank {
+  width: 30px;
+  height: 20px;
+  opacity: 0;
+}
+@keyframes fadeInOpacity {
+  from { opacity: 0; }
+}
+.country-dropdown img {
+  width: 30px;
+  height: 20px;
+  visibility: visible;
+  animation: fadeInOpacity 2s easy-in 0 1 normal forwards;
 }
 
 .country-dropdown-content {
