@@ -19,20 +19,24 @@
 
     <!-- Header -->
     <div class="header">
-      <div class="menu__icon">
-        <div class="menu__icon_bar"></div>
-        <div class="menu__icon_bar"></div>
-        <div class="menu__icon_bar"></div>
+      <div class="m-menu">
+        <div class="m-menu__burger">
+          <span></span>
+        </div>
+        <input class="m-menu__toggle" type="checkbox">
+        <div class="m-menu__backdrop"></div>
+        <div class="m-menu__content">
+          <!-- Navigation -->
+          <nav>
+              <h2 class="nav-menu__header">Menu</h2>
+              <ul class="ul-menu__listing">
+                  <li><a class="loggedIn" href="javascript:void(0);" onclick="loadFinance();">Finance</a</li>
+                  <li><a href="index.html">Girls</a></li>
+                  <li><a href="index.html">Money</a></li>
+              </ul>
+          </nav>
+        </div>
       </div>
-      <!-- Navigation -->
-      <ul class="menu">
-        <li>
-          <a href="/">Home</a>
-        </li>
-        <li>
-          <a class="loggedIn" href="#" onclick="loadFinance();">Finance</a>
-        </li>
-      </ul>
     </div>
 
     <!-- Page Wrapper -->
