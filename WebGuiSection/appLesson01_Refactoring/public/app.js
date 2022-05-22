@@ -358,6 +358,7 @@ class RComponent {
     labelsField: `<div id="{field.id}" class="container"><ul class="direction">{field.content}</ul></div>`,
     simplediv: '<div class="{div.className}">{div.content}</div>',
     div: '<div id="{div.id}" class="{div.className}">{div.content}</div>',
+    scrollDiv: '<div id="{div.id}" class="scrollable" onscroll="window.application.callHandler(this,\'{div.id}\')">{div.content}</div>',
     button: '<button id="{button.id}" type="button" class="{button.className}" onClick="window.application.callHandler(this,\'{button.id}\')">{button.content}</button>',
     simplebutton: '<button type="button" class="{button.className}" onClick="window.application.callHandler(this,\'{button.id}\')">{button.content}</button>',
     comboBox: '<div id={cb.id}><input class="{cb.className}" type="text" list="{cb.comboId}"{cb.value} onchange="window.application.callHandler(this,\'{cb.comboId}\')"><datalist id="{cb.comboId}" class="comboBox">{cb.options}</datalist></div>',
@@ -525,7 +526,8 @@ class RComponent {
     const htmlRoot = window.document.getElementById('app');
 
     if (tNode.hasDescendant()) {
-      tNode.descendants[0].value.unmount();
+      let leafToFall = tNode.descendants.pop();
+      leafToFall.value.unmount();
     }
 
     htmlRoot.innerHTML = RComponent.build(tNode, props, buildFunc);
@@ -843,6 +845,11 @@ class FinanceTable extends RComponent {
   constructor(props) {
     super(props);
 
+    this.state = {
+      data: this.props.data,
+      last: 30,
+    }
+
     this.util = {
       formatter: {
         date: (date) => {
@@ -888,17 +895,21 @@ class FinanceTable extends RComponent {
       this.props.callInput();
     }
   }
+  handleScroll() {
+    this.setState({last: this.state.last + 20});
+  }
   render() {
-    const content = this.fill('div', {
+    const content = this.fill('scrollDiv', {
       id: this.id + 'content', 
-      className: 'scrollable',
-      content: this.props.data.map(this.rowToHtml.bind(this)).join('')
+      content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
     });
     const label = this.fill('simplediv', {className: 'financialLabel', content: (new Date()).toISOString().substring(0, 10)});
     const buttonId = 'AddNewCashflow';
-    this.registerHandler(buttonId, this.handleAddNew.bind(this));
     const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
     const header = this.fill('simplediv', {className: 'financialHeader', content: label + button});
+
+    this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
+    this.registerHandler(buttonId, this.handleAddNew.bind(this));
 
     return this.fill('div', {id: this.id, className: 'cashflowTable', content: header + content});
   }
@@ -1409,26 +1420,6 @@ var loadFinance = function() {
         Book: cf.book,
       };
     }); 
-    // const props = {
-    //   id: 'cfMainTable',
-    //   className: 'table',
-    //   columns: ['Date', 'Provider', 'Description', 'Amount', 'Location', 'Book'],
-    //   data: filteredCfs,
-    // };
-
-    // const pgProps = {
-    //   id: 'cfTablePaging', 
-    //   rowCount: filteredCfs.length, 
-    //   rowsPerPageCallback: undefined.getRowsPerPageHandler(), //  <=== ERROR! No direct access to components. Find another solution for this
-    //   pageCallback: undefined.getPageHandler() //  <=== ERROR! No direct access to components. Find another solution for this
-    // };
-    // let container = new Container({id: 'cfTableContainer', className: 'tableContainer', content: [{props, p=>new Table(p)}, {props: pgProps, buildFunc: p => new TablePagination(p)}]});
-    // let mountedContainer = container.mount('app');
-
-    // window.document.getElementById('app').innerHTML = mountedContainer;
-
-    
-    //const myInput = new TextField({id: 'provider', label: 'Provider'});
 
     const callInput = () => {
       const optionApi = new RestAPI('option');

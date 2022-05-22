@@ -19,31 +19,13 @@ helpers.sendSms(process.env.SMS_TEST_PHONE, 'Hello AGAIN! From my NodeJS learnin
 var config = require('./config/config');
 
 // Internal Modules dp.
-var ParsedRequest = require('./ParsedRequest');
+var parseRequestToContext = require('./parseRequestToContext');
 var ResponseHandler = require('./ResponseManager');
-
-// Lib dp.
-var _data = require('./lib/data');
-
-// TESTING
-// @TODO delte this
-// _data.create('test', 'newFile', {'foo': 'bar'}, function(err) {
-//     console.log('this was the error: ', err);
-// });
-// _data.read('test', 'newFile', function(err, data) {
-//     console.log('this was the error: ', err, ' and this was the data: ', data);
-// });
-// _data.update('test', 'newFile', {'foo' : 'fizz'}, function(err) {
-//     console.log('this was the error: ', err);
-// });
-// _data.delete('test', 'newFile', function(err) {
-//     console.log('this was the error: ', err);
-// });
 
 // Unified process for all requests to this server
 var unifiedServer = function(req, res) {
-    var parsed = new ParsedRequest(req);
-    var manager = new ResponseHandler(parsed, res);
+    const context = parseRequestToContext(req); //BuildEventHandlerContext(req);
+    var manager = new ResponseHandler(context, res);
 }
 
 // The server instance that should respond to all HTTP requests

@@ -34,7 +34,7 @@ handlers.hello = function(data, callback) {
 // Favicon
 handlers.favicon = function(data, callback) {
     // Reject any request that isn't a GET
-    if (data.method === 'get') {
+    if (data.httpMethod === 'get') {
         // Read in the favicon's data
         helpers.getStaticAsset('favicon.ico', function(err, img) {
             if (!err && img) {
@@ -53,8 +53,8 @@ handlers.favicon = function(data, callback) {
 
 handlers.users = function(data, callback) {
     var acceptableMethods = ['post', 'get', 'put', 'delete'];
-    if (acceptableMethods.indexOf(data.method) > -1) {
-        _users[data.method](data, callback);
+    if (acceptableMethods.indexOf(data.httpMethod) > -1) {
+        _users[data.httpMethod](data, callback);
     } else {
         callback(405);
     }
@@ -62,8 +62,8 @@ handlers.users = function(data, callback) {
 
 handlers.tokens = function(data, callback) {
     var acceptableMethods = ['post', 'get', 'put', 'delete'];
-    if (acceptableMethods.indexOf(data.method) > -1) {
-        _tokens[data.method](data, callback);
+    if (acceptableMethods.indexOf(data.httpMethod) > -1) {
+        _tokens[data.httpMethod](data, callback);
     } else {
         callback(405);
     }
@@ -71,8 +71,8 @@ handlers.tokens = function(data, callback) {
 
 handlers.checks = function(data, callback) {
     var acceptableMethods = ['post','get','put','delete'];
-    if (acceptableMethods.indexOf(data.method) > -1) {
-        _checks[data.method](data, callback);
+    if (acceptableMethods.indexOf(data.httpMethod) > -1) {
+        _checks[data.httpMethod](data, callback);
     } else {
         callback(405);
     }
@@ -81,7 +81,7 @@ handlers.checks = function(data, callback) {
 handlers._users = {};
 
 handlers.index = function(data, callback) {
-    if ('get'.localeCompare(data.method, undefined, { sensitivity: 'accent' }) === 0) {
+    if ('get'.localeCompare(data.httpMethod, undefined, { sensitivity: 'accent' }) === 0) {
         // let api = new RestAPI('cashflow');
 
         // api.get().then(data => {
@@ -150,7 +150,7 @@ handlers.index = function(data, callback) {
 // Public static assets
 handlers.public = function(requestData, callback) {
     // Reject any request that isn't a get
-    if (requestData.method === 'get') {
+    if (requestData.httpMethod === 'get') {
         // Get the file name being requested
         let trimmedAssetName = requestData.trimmedPath.replace('public/', '').trim();
 

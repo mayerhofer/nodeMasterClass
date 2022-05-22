@@ -69,19 +69,19 @@ ResponseHandler.prototype.buildBasicResponse = function(httpStatus, contentType,
  * @param {object} parsedRequest - The parsed important elements from HTTP request received by this service.
  * 
  */
-function ResponseHandler(parsedRequest, res) {
+function ResponseHandler(context, res) {
     // Save context to variable
     var self = this;
 
     // Get elements from parsed request.
-    this.elements = parsedRequest.getElements();
+    this.elements = context;
     // Get response object from Request
     this.response = res;
 
     // If route not found, choose default handler (404 - Not Found)
     console.log('handler: ' + this.elements.trimmedPath);
     var handler = typeof(router[this.elements.trimmedPath]) == 'function' ? router[this.elements.trimmedPath] : router['default'];
-    parsedRequest.addCallbackEvent(function(data) {
+    context.callbacks.push(function(data) {
         handler(data, self.buildBasicResponse.bind(self));
     });
 }
