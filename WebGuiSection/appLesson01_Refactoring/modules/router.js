@@ -208,6 +208,7 @@ var router = {
     // GUI Static handlers
     'public/app.css' : handlers.public,
     'public/app.js' : handlers.public,
+    'public/skyspace.jpg' : handlers.public,
 };
 
 module.exports = router;

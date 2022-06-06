@@ -116,60 +116,19 @@ class CountryAPI {
   }
 }
 
-async function apiOperation(path, element, method) {
-  let fetchOptions = {method};
-  if (['POST', 'PUT'].includes(method)) {
-    fetchOptions = Object.assign({}, {body: JSON.stringify(element), headers: {'Content-Type': 'application/json'}}, fetchOptions);
-  }
-  let response = new ResponseHelper(await fetch(path, fetchOptions));
-
-  if (response.hasOkStatus()) {
-    return element.elementId || await response.json();
-  }
-
-  throw response.buildError(response);
-}
-
+/**
+ * class RestAPI
+ */
 class RestAPI {
-  constructor(route, profile) {
-    this.route = route.trim();
-    this.path = endpoint + this.route;
-    this.profile = profile
-  }
-
- async delete(element) {
-    const _path = `${this.path}/${element._id}`;
-
-    apiOperation(_path, element, 'DELETE');
-  }
- async insert(element) {
-    return await apiOperation(this.path, element, 'POST');
-  }
-  async update(element) {
-    const _path = `${this.path}/${element._id}`;
-
-    apiOperation(_path, element, 'PUT');
-  }
-
-  async get() {
-    const _path = this.path;
-    const fetchOptions = {method: 'GET'};
-
-    let response = new ResponseHelper(await fetch(_path, fetchOptions), this.route);
-    if (response.hasOkStatus()) {
-      let res = (this.route === 'errorLog' ? await response.textToArray() : await response.jsonToArray());
-      return res;
-    }
-    
-    throw response.buildError(response);
-  }
-}
-
-/**                                                   * class RestAPI                                      */                                                  class RestAPI {                                        /**                                                   * constructor
-   * @param route The asset in DB to work with.         */
+  /**
+   * constructor
+   * @param route The asset in DB to work with.
+   */
   constructor(route) {
-    this.defaultReqArgs = {                                port: 3002,
-      hostname: 'localhost',                               path: '/'+route,
+    this.defaultReqArgs = {
+      port: 3002,
+      hostname: 'localhost',
+      path: '/'+route,
       headers: {
         'Content-Type': 'application/json',
         connection: 'Close',
@@ -185,36 +144,59 @@ class RestAPI {
     if (['PUT', 'POST'].indexOf(method) >= 0) {
       assign.headers['Content-Length'] = Buffer.
         byteLength(payload);
+      assign.body = JSON.stringify(payload);
     }
     if (['PUT','DELETE'].indexOf(method)>=0) {
-      assign.path += `/${id}`;                           }
-    return assign;                                     }                                                                                                                                                             async delete(element) {                                 const details = this.
-      genReqArgs('DELETE', null, element._id);       
-    const response = await fetch(details, element);
-                                                         return response;
-  }                                                    async insert(element) {
-    const details = this.
-      genReqArgs('POST', element);
+      assign.path += `/${id}`;
+    }
+    return assign;
+  }
 
-    const response = await fetch(details, element);
+  async myFetch(details) {
+    const {
+      hostname, 
+      port, 
+      path
+    } = details;
+
+    const url = 
+      `http://${hostname}:${port}${path}`;
+
+    return await fetch(url, details);
+  }
+
+  async delete(element) {
+    const details = this.
+      genReqArgs('DELETE', null, element._id);
+    const response = await this.myFetch(details);
 
     return response;
   }
+
+  async insert(element) {
+    const details = this.
+      genReqArgs('POST', element);
+
+    const response = await this.myFetch(details);
+
+    return response;
+  }
+
   async update(element) {
     const data = JSON.stringify(element);
     const details = this.
       genReqArgs('PUT', data, element._id);
 
-    const response = await fetch(details, data);
+    const response = await this.myFetch(details);
 
     return response;
   }
 
   async get() {
     const details = this.genReqArgs('GET');
-    const response = await fetch(details);
+    const response = await this.myFetch(details);
 
-    return response;
+    return await response.json();
   }
 }
 
@@ -451,7 +433,7 @@ class RComponent {
     <div id="{field.id}InputTooltip" class="tooltip {field.hideError}">{field.validationMessage}</div>
   </div>`,
     amountField: `<div id="{field.id}" class="container">
-    <div class="textfield">
+    <div class="textfield modalfield">
       <div class="amount-currency-container">
         <div class="currency-dropdown">
           <label>{field.currency}</label>
@@ -500,7 +482,7 @@ class RComponent {
     </button>`,
     liabilityButton: `
     <div id={btn.id} class="{btn.className}">
-      <input class="m-modal__toggle" type="checkbox">
+      <input id="cb{btn.id}" class="m-modal__toggle" type="checkbox">
       <div class="m-modal__backdrop"></div>
       <div class="m-modal__content">{btn.content}</div>
       <img src="data:image/png;base64,{btn.img}"/>
@@ -945,6 +927,7 @@ class FinanceTable extends RComponent {
     const self = this;
     
     api.get().then(data => {
+      console.log(data)
       // At the very least sort by date descending to present meaninful information right on top.
       // Should always have the most recent cashflows so next(elementId) can be passed to CREATE form.
       data.sort((a,b) => {
@@ -1298,7 +1281,11 @@ class FinanceForm extends RComponent {
     this.setState({book});
   }
   handleAddLiability(obj) {
+    const cb = window.document.getElementById('cb' + this.id + 'Liability');
+
     this.setState({liability: obj});
+
+    cb.checked = false;
   }
 
   render() {
@@ -1335,7 +1322,7 @@ class FinanceForm extends RComponent {
       {
         label: 'Health',
         alias: 'health',
-        img: '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',
+        img: 'FsklEQVR4nO2aTWwVVRTHf6+0lcbaqthaYyQEqjUpaqJo+DQBWwENmpgYo5JiF8a4MHYjJsYFO+OS1JUxIgt14cZPbAJRCo0gGo1asFYRBVOMWlTEYFvCuDj39N6ZzntvZt5M+9q+X/Iyb+7ce889//t9Z6BChQoVKsxfcgnTrAE6gZXA9cCVQCPwJ/AH8B1wCPgQ+LKE8lUBq42tVUBrHlufAH0l2ipKA7Ad+BnwYvyOAU8Al5SprUh0Ab86hkaAV4AHgVuAa4CFwLXACuBR4HVg1EnzA3BPBFvbEth6I6GtolwGvOVk/DVwH9G7TjUi3gmT/iLQC9REtHV/TFvbItqKRBPwucnsL+AxpE8moRZ4Fpgw+fUBl+ax9XfGtiLRAHxhMhgGliUsTJBObFPtB+qBZmDQhH2PDHRp2+ojRkvIAe+YhCeAq1MqkHIDcMrkfwDr/GAGtm7EivBS1ERPmgT/ADelXCClFSuCB3yDtIQs6MB2h3uLRW5C5lcPeCijAoG/2WfpvLLd2PoRmUHy8oKJeJhki6QoNCEjvAd8C7RkZMelFpkaPWSdEMpC4IyJtC7DwuhoPx0177IVK3ooD2ALliUHgc+YXudB1gk6IN6mge5cu9Fc3824IOuA24HfMrYT5AKyNwHrq0+AVea6J0WjOWAfsDfFPEtBfVsdfFAFnEeaR5pNsx071S1KMd+krMAuuADbAhqRQXAC2WKmRafzf2mK+SbltLlOVrIKUGeuo8gmIi3ucv6ntcQthd/NdXJvoAL8F3yQAtXAnc59ObQA7YbnNUAFOAuMI5uTgiulGKxENlVKWhuqUtBFl7aESQEuIMvEHHLokAYd5jporuUggJZhWAPcafCwua6JmWk1sqvrD+SnArwcMK7kgI/NL+nePy6bzPXTsIePIFNE6MMCdGGnug0mrAHpUhPAFcAYMrjWOemWO+nWx7SZhCpkFvCAtWER6oFzJkLUbrAAaU7qyG4TvsXcD5j7IXPf7qTtCUmXJVqmnyiw0es1kd6OmKnW/i9IDZ9DzvZ2mvAdJt4ec7/FSfseVgBNl4QOZKd3CticJ84CZI/jAc8Uyuw64F+nYFF/XcB+878bOIq/qamwPea+Bpl5PCduNzKeHExgX38n8/j1uHl+mghCPxfT6AFT8O6AQ2ex53Da3HvN/Vonrqbbj388SUuAW7GVurWY82BHdR0Q66MkQpTVMcRDmrii/U83IzvM/U4n3UWkK2mLiop2gZPYUV5pMeEe8GaMPGkBjmNPb6OuEHdjBehxwnVTNGTuB/CPCW66YaTPlop77HaE6BU5yTLswWVUEdZjHVnuhNchNTyGTIsTyDSpK8UNTrpitX8zsLhIHNf5QeQYLhHu6W0UEaqQvvwRU6cabd5P4Z8iNV2/+VUXyL8eEXEU6dthNGNH/EFS2N7HFSEf/dgjN3eKjEMO+/rsDFNbQurOK2mI8Cr+ETt0NRaBGkSEMfzvLYLOp/2SZYoIcQeV57HOu1NkMTYBHwBtgXC3EjJ3XilFhIcJnyKL8aJJM8JUEcDv/FEydF5JKsIdWAGejmGvDjlY9YD3A8+m3XkliQiLsAK0F4nbClzu3Nchb63udsKamCHnlSQi7EVqs9BrtxZkjXCc/PP9jDuvlDowhlGLfGDlISI0Bp6XjfNKFiI0IiKM4z9Jcl+sloXzSqkibAZ24V+41OJ3sGydV0oR4TXsKjFs9Vb2zitJRXCns12BZ7PGeSWqCC1IM1eaEec3OmGzznmlmAityAB3iKmjvDJrnVcKidCIPXA5hL8lgN/5Y8xC55VCIixGRBjH/53QnHFeKdYS3JemTcBXzCHnlSXYb3gHCD+admt+CPkoek7Rhmxp9SjdbQlX4a/56fh0bkZow/+ZbD3zyHnFPW0eQd7VzxvnlaXIWb2eD+xjHjmv5JAZYslMF6RChQoV5i3/A3zaLZcQYZePAAAAAElFTkSuQmCC',
       },
       {
         label: 'Investments',
@@ -1462,10 +1449,22 @@ class LiabilityModal extends RComponent {
       direction: false,
       amount: 10,
       currency: 'EUR',
+      debtor: 'Cris Carnaval',
+      validationState: {
+        debtor: {
+          validDef: {
+            required: true,
+            restricted: false,
+          }
+        }
+      }
     };
   }
   shouldComponentUpdate(nextProps, nextState) {
     return this.state.currency !== nextState.currency;
+  }
+  handleDebtorChange(e) {
+    this.setState({debtor: e.value});
   }
   handleCurrencyUpdate(e) {
     this.setState({currency: e.value});
@@ -1480,7 +1479,7 @@ class LiabilityModal extends RComponent {
     let dt = new Date();
     const obj = {
       dueIn: Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()),
-      source: "Cris Carnaval",
+      source: this.state.debtor,
       amount: Number.parseFloat(this.state.amount),
       cashflowId: -1,
       elementId: -1,
@@ -1490,6 +1489,16 @@ class LiabilityModal extends RComponent {
     this.props.addLiability(obj);
   }
   render() {
+    const buildTb = props => this.buildRComponent(props, p => new TextField(p));
+    const buildProps = label => {
+      return {
+        id: this.id + label,
+        label,
+        value: this.state[label.toLowerCase()],
+        validDef: this.state.validationState[label.toLowerCase()].validDef,
+        update: this[`handle${label}Change`].bind(this),
+      };
+    };
     const buildCurrProps = key => {
       return {
         id: this.id + 'Currency',
@@ -1512,16 +1521,21 @@ class LiabilityModal extends RComponent {
       currencyList,
     };
     const amount = this.fill('amountField', amountProps);
+    const debtor = buildTb(buildProps('Debtor'));
+    const buttonId = 'AddNewLiability';
+    const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
+    const header = this.fill('simplediv', {className: 'financialHeader', content: button});
     const content = `
-    <h1>Liability</h1><br />
-    <label>Cris</label><br />${amount}<br />
-    <button onclick="window.application.callHandler(this,\'${this.id + 'Liability'}\')">Save</button>
+    <h1>Add Liability</h1><br />${header}<br />
+    ${debtor}<br />${amount}<br />
     `;
+    
+    this.registerHandler(buttonId, this.handleSave.bind(this));
+
     this.registerHandler(this.id + 'Currency', this.handleCurrencyUpdate.bind(this));
     this.registerHandler(this.id + 'Amount', this.handleAmountChange.bind(this));
     this.registerHandler(this.id + 'AmountDir', this.handleDirectionChange.bind(this));
-    this.registerHandler(this.id + 'Liability', this.handleSave.bind(this));
-    return this.fill('div', {id: this.id, content});
+    return this.fill('div', {id: this.id, className: 'liability', content});
   }
 }
 /////////////////////////////////////////////
@@ -1533,6 +1547,7 @@ var loadFinance = function() {
   let api = new RestAPI('cashflow');
 
   api.get().then(data => {
+    console.log(data)
 
     const callInput = (data) => {
       const optionApi = new RestAPI('option');
@@ -1544,6 +1559,7 @@ var loadFinance = function() {
       });
     };
     const props = {
+      
       data: data.sort((a,b) => {
         return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
       }),

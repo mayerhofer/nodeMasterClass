@@ -216,7 +216,7 @@ a:active {
   transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
   pointer-events: all;
   box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.75);
-  background-color: transparent;
+  background-color: rgba(59, 59, 58, 0.8);
 }
 .m-modal__toggle:checked {
   position: fixed;
@@ -232,7 +232,8 @@ a:active {
   transform: none;
 }
 .m-modal__toggle:checked ~ .m-modal__backdrop {
-  opacity: 1;
+  opacity: 0.5;
+  background-image: url('http://localhost:3000/public/skyspace.jpg');
   z-index: 1000;
 }
 /* Page - End Modal */
@@ -451,15 +452,26 @@ nav {
   justify-content: center;
   flex-direction: column;
 }
+
+.liability {
+  display: grid;
+}
+
+.liability h1 {
+  font-weight: 900;
+  font-size: 40px;
+  justify-self: center;
+}
+
 /* ***************************************************************** */
 /* Forms - Input Type Text */
 .container {
-  width: 100vw;
+  width: 99%;
   height: 80px;
   margin: 0;
   padding: 0;
   padding-top: 5px;
-  background-color: #3B3B58;
+  background-color: transparent;
   position: relative;
   top: 1px;
   left: 1px;
@@ -517,7 +529,7 @@ nav {
   /* margin-left: -65;*/
 }
 .textfield {
-  background-color: #3B3B58;
+  background-color: transparent;
   border-bottom: 4px solid #7A5980;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
@@ -531,6 +543,9 @@ nav {
   display: flex;
   justify-content: flex-start;
   flex-direction: column;
+}
+.modalfield {
+  background-color: transparent;
 }
 
 .textfield .field-label {
@@ -836,7 +851,7 @@ nav {
   color: #3B3B58; */
 
   /* teste*/
-  background-color: #3B3B58;
+  background-color: transparent;
   /* border: 2px solid darkslateblue; */
   border: 2px solid #7A5980;
 }
@@ -849,7 +864,7 @@ nav {
   padding: 0.15em;
   color: white;
   /* background-color: mediumslateblue; */
-  background-color: #3B3B58;
+  background-color: transparent;
   border: 2px solid transparent;
   border-radius: 8px;
   transition: all 0.1s ease;
