@@ -267,7 +267,6 @@ const parseHtmlToElement = function(id, str) {
 class TreeNode {
   constructor(value, ancestral) {
     if (typeof value !== 'object' || !(value instanceof RComponent)) {
-      console.log(value)
       throw 'Argument "value" must be an instance of a class that extends RComponent.';
     }
     if (value.id === 'app' && ancestral) {
@@ -339,18 +338,10 @@ class TreeNode {
       this.ancestral.addDescendant(this);
     }
 
-    let obj = window.application.registeredComponents;
-    console.log('inside register. Props.id = ' + this.value.props.id)
-    Object.keys(obj).forEach(key => console.log(key))
-
     if (typeof this.value.props.id === 'string' && this.value.props.id.trim().length > 0) {
       // TODO: This can still generate repeated ids, change this solution for IDs.
       this.value.id = this.value.props.id + '_' + (Math.random()*100000).toFixed();
-      console.log('registering: ' + this.value.id)
       window.application.registeredComponents[this.value.id] = this;
-      console.log('new node registered')
-      console.log('node id: ' + this.value.id)
-      Object.keys(window.application.registeredComponents).forEach(key => console.log(key))
     } else {
       throw 'Invalid RComponent: property id is missing or invalid.';
     }
@@ -371,10 +362,14 @@ class TreeNode {
 class RComponent {
   constructor(props) {
     this.props = props;
+
+    // TODO: Either add method to all Components or find a better solution
+    if (typeof this.getDerivedState === 'function') {
+      this.getDerivedState(props);
+    }
   }
 
   //static icons
-
   static templates = {
     labelField: `
       <li class="direction-option">
@@ -447,14 +442,14 @@ class RComponent {
       <div class="direction-container">
         <ul class="direction">
           <li class="direction-option">
-            <input type="radio" id="income" name="{field.id}Direction" value="income" alt="Income" {field.incomeChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
-            <label for="income">
+            <input type="radio" id="{field.id}Income" name="{field.id}Direction" value="income" alt="Income" {field.incomeChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
+            <label for="{field.id}Income">
               <img class="img-swap icon-small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAADmElEQVR4nO2bS0hUURjHf41KYmgZBRE9QFqUPaQgohZRYJsgCCMzCtJVQdEm0iAMKloEQbSIiGhVUBG0iB6IC5WgZS1UKowIo4VZCL1MMm1xZnDOQWfuedxzRq8/ODhX7vnu//vu3O9+5zGQPNYB3cBHYG9gLd4pQTg/nm79YeX4p4UJ58eB3rBy/LIC+IkcgLqgijzzGNn552Hl+GUfsvO/gKqgijxSDnxCDkBLUEWeuYrsfA/ibZAINgB/mXB+DNgRVJFHUsBL5Lt/K6gizxxHdv4rsCioIo8sAYaQA3BkshPneBSlSyvQAJQa9C0HFmcddwE7EYGYFhxGvns2bQRY41e+HaWIkZqrAFzMdbHiODyw5CSwMuv4OyKB6TIKtAEXXIjyRSXwDfkO1gZV5JlryM4/DSvHL1XAHyacH0XM3iSGhyS4atuCqNMzzv8GlgVV5JkXyHf/fFg5fqlDdn4AqAiqyCMlwDvkABwNqsgzJ5Cdf4vn4szFxVZjlrBSwDnlf82I19+04QruavYuz9qt2Y786rJpY8BWv/LtmAu8wd3dD1b0mOaAZsSzn6EfuGdoqwe4b9jXGpMZoVWIBcbsmZo9wBMniqKxELiU1mLKEIZD5Tbkr+8jCxGm3MDNo6e9ONqgGPgBLLdyxYwO3ARgXOeiFcBnpfMpa1fMCBKA60rHbsItMakBiL3vZkSFlun0D9imeWGXOAtAKkKHIuBm+m+G24hlp2lPlDrgGLAx63gQOBPRfhmwCbPFDRBTZK8QEyS50Jk4rdQRMB/hcPbXbdIlpiku9B79pKS2PmCBYttbElR3VnQRvXiqdyhyf1wByJcDXgPD6c/DiMchatIpi3heFOY5tCWRLwd8QExY7gLaEQMgU54hXp1RWA/s1rB9WePcg4gdY7HTiPx1a3TY1+trcEaT+AAUI563VjTfjwp9wFnEEHMqTgOHItpbqnn9do1za7IPioEH2G8gqEU8U8dznFOdbnFgvIKcwt3uibici5XE5wA1AJ2ISi9q06FJw26Tpm0dzZ3ZHWe/AaEFhEYthSuJb09OtYZt3YRqNRx2NWLrUOyq5axNy1cKxzYanPEkPgBqDtBd4tL55UXBDodzPcf50MkBs8PhQiTxAVBzQA16Q0sdCnY4nE3chVBBDocHHYlQ7biyC/BFOTbZPj+l3QPpDzYVVQ+wVjFeBNxF/GLD1O4IcAd5WQ7EJupeS80DQP1/Q7c2KrewnUoAAAAASUVORK5CYII="/>
             </label>
           </li>
           <li class="direction-option">
-            <input type="radio" id="expense" name="{field.id}Direction" value="expense" alt="Expense" {field.expenseChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
-            <label for="expense">
+            <input type="radio" id="{field.id}Expense" name="{field.id}Direction" value="expense" alt="Expense" {field.expenseChecked} onchange="window.application.callHandler(this, '{field.id}Dir')">
+            <label for="{field.id}Expense">
               <img class="img-swap icon-small" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAABGUlEQVRIie3UPUvDUBQG4Ad161AQXfwCQTo66yIiDoqO4tw/UcRd0NH/4OBmB0HE2UkQBAdxbV0cHBShqGAdjBSKtyRtLnTICweS3JDncLk5FCkyBNnCE9oDVhObWeBmDuhfNULINk7wgPfk5agZx3mgy2hZwGOCvKCGRUxgNNDMIAWW8Zw8uMPcP43lDu+ildycoRTYkdzh7+TiECMBNAr8gWoPMAR/4hhTmMFFVnglBdoN11HpWp/NCqdNG7dYDazPx4KrwmeghMtYcCgV3GdEgyMzbXbw2ge60S84hiOdX7GOct/tp8w0rhPwC3uxQVjXGa0NLMXEyljDqc7WXmFy0A9nORgt7Os9WnOD33CDA7+jsUiR4c4PF/oFIjYEfRAAAAAASUVORK5CYII="/>
             </label>
           </li>
@@ -546,6 +541,10 @@ class RComponent {
 
         // If rule exist or if there a real difference, re-render.
         if (!RComponent.compare(found.value.props, props)) {
+          if (found.value.getDerivedState) {
+            found.value.state = found.value.getDerivedState(props);
+          }
+          
           found.virtualDom = found.value.render();
         }
       }
@@ -597,13 +596,18 @@ class RComponent {
       } else {
         throw 'Argumento (nextState) invalido.';
       }
-      console.log('New state for', this.id, newState);
-      this.state = newState;
 
       if (typeof this.shouldComponentUpdate !== 'function' ||
           this.shouldComponentUpdate(this.props, newState)) {
+
+        console.log('New state for', this.id, newState);
+        this.state = newState;
+
         // Trigger re-render
         this.update();
+      } else {
+        console.log('New state for', this.id, newState);
+        this.state = newState;
       }
     }
   }
@@ -647,14 +651,11 @@ class RComponent {
 
     // Trigger component lifecycle method
     if (typeof this.componentWillUnmount !== 'function' || this.componentWillUnmount()) {
-      console.log('unmounting. Nodes registered')
-      Object.keys(window.application.registeredComponents).forEach(key => console.log(key));
       const tNode = TreeNode.getRegistered(this.id);
       if (tNode instanceof TreeNode) {
         tNode.releaseDescendants();
         tNode.unregister();
       } else {
-        console.log(tNode, this.id, window.application.registeredComponents)
         throw 'Found an item not a TreeNode in Tree';
       }
     }
@@ -880,6 +881,20 @@ class Table extends RComponent {
   }
 }
 // Page - Components - End Table
+/////////////////////////////////////////////
+// Page - Business Components - Error Log Table
+class ErrorTable extends RComponent {
+  constructor(props) {
+    super(props);
+
+    this.state = {};
+  }
+
+  render() {
+    return '';
+  }
+}
+/////////////////////////////////////////////
 // Page - Business Components - Finance Table
 class FinanceTable extends RComponent {
   constructor(props) {
@@ -927,7 +942,6 @@ class FinanceTable extends RComponent {
     const self = this;
     
     api.get().then(data => {
-      console.log(data)
       // At the very least sort by date descending to present meaninful information right on top.
       // Should always have the most recent cashflows so next(elementId) can be passed to CREATE form.
       data.sort((a,b) => {
@@ -974,15 +988,17 @@ class TextField extends RComponent {
   // props = {label: 'Provider', value: provider.value, validDef: {restricted: false, required: true, options: []}}
   constructor(props) {
     super(props);
-
+  }
+  getDerivedState(props) {
     this.state = {
       hideError: ' hide',
       invalidDiv: '',
       invalid: '',
       validationMessage: '',
-      placeholder: this.props.label,
-      value: this.props.value,
+      placeholder: props.label,
+      value: props.value,
     };
+    return this.state;
   }
   handleValidation(val) {
     const props = this.props.validDef;
@@ -998,8 +1014,6 @@ class TextField extends RComponent {
     newState.validationMessage = bIsValid ? '' : (isFieldEmpty ? '* Required Field' : '* Not a valid option.');
     newState.value = val;
 
-    console.log(newState)
-    
     this.setState(newState);
   }
   handleUpdate(e) {
@@ -1031,65 +1045,6 @@ const currencies = {
   'BRL': 'R&dollar;', // R$
   'CZK': 'K&#269;', // Kč
 }
-/////////////////////////////////////////////
-// Page - Components - Labels
-class Labels extends RComponent {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      selected: this.props.selected ?? [],
-      labels: this.props.labels ?? [],
-    };
-  }
-  // Load flag images
-  componentDidMount() {
-    // Inside asynchronous methods, context of this is lost.
-    let field = this;
-
-    // Load flags only if not already loaded to avoid infinite loop
-    if (!Array.isArray(field.state.labels) || field.state.labels.length <= 0) {
-      // Countries list in DB is huge but not necessary here in this form. Best to change source code to add countries when required.
-      const uniqueCountries = ['Poland', 'Italy', 'Scotland', 'Brazil', 'Spain'];
-      // Istead of getting all and then filtering, better to make multiple requests since we don't need many countries.
-      Promise.all(uniqueCountries.map(c => CountryAPI.getByName(c))).then(data => {
-        setTimeout(() => {
-          // Result returns one array with each object. Combine them in a single array removing undefined results.
-          let countries = data.flat().filter(item => item !== undefined);
-
-          field.setState({countries});
-        }, 1000);
-      });
-    }
-  }
-  handleChange(e) {
-    this.setState({country: e.title});
-
-    this.props.handleChange(e.title);
-  }
-  buildCountryProps(c) {
-    let id = this.id + c.name.replace(/\s/g, '');
-    this.registerHandler(id, this.handleChange.bind(this));
-
-    return {id, title: c.name, imgBase64: c.flag};
-  }
-  getFlagProps() {
-    const found = this.state.countries ? this.state.countries.find(c => c.name === this.state.country) : undefined;
-    const flag = found ? found.flag : '';
-
-    return {id: this.state.country, imgBase64: flag, className: this.state.countries.length > 0 ? '': 'country-hide'};
-  }
-  render() {
-    const mapCountry = c => this.fill('flag', this.buildCountryProps(c));
-    return this.fill('countryField', {
-      id: this.id, 
-      selected: this.fill('flag', this.getFlagProps()),
-      list: this.state.countries ? this.state.countries.map(mapCountry).join('') : '',
-    });
-  }
-}
-// Page - Components - End Labels
-/////////////////////////////////////////////;
 /////////////////////////////////////////////
 // Page - Components - Flag Combo
 class FlagCombo extends RComponent {
@@ -1165,7 +1120,7 @@ class FinanceForm extends RComponent {
       description: this.props.description ?? '',
       provider: this.props.provider ?? '',
       labels: this.props.labels ?? [''],
-      book: this.props.book ?? '',
+      book: this.props.book ?? 'M EUR',
       validationState: {
         provider: {
           validDef: {
@@ -1205,12 +1160,11 @@ class FinanceForm extends RComponent {
       this.state.book !== nextState.book;
   }
 
-  handleCountryUpdate(e) {
-    this.setState({country: e.title});
+  handleCountryUpdate(country) {
+    this.setState({country});
   }
-  handleBookUpdate(e) {
-    let newValue = e.innerHTML;
-    this.setState({book: newValue});
+  handleBookChange(e) {
+    this.setState({book: typeof e === 'string' ? e : e.innerHTML});
   }
   handleCurrencyUpdate(e) {
     const newOptions = this.props.bookOptions.filter(o => o.currency === e.value).map(o => o.description);
@@ -1223,11 +1177,9 @@ class FinanceForm extends RComponent {
     this.setState({direction: e.id === 'expense' ? false : true});
   }
   handleLabelChange(e) {
-    console.log('##')
     this.setState({labels: [e.value]});
   }
   handleUpdateDate(e) {
-    console.log('handling UpdateDate', e.value);
     this.setState({date: new Date(e.value)});
   }
   handleUpdateAmount(e) {
@@ -1276,9 +1228,6 @@ class FinanceForm extends RComponent {
   }
   handleDescriptionChange(description) {
     this.setState({description});
-  }
-  handleBookChange(book) {
-    this.setState({book});
   }
   handleAddLiability(obj) {
     const cb = window.document.getElementById('cb' + this.id + 'Liability');
@@ -1420,12 +1369,12 @@ class FinanceForm extends RComponent {
     let actionButtonProps = {id: this.id + 'ActionButtons', className: 'buttons', content: [liability, save].join('')};
     let actionButtons = this.fill('simplediv', actionButtonProps);
 
-    this.registerHandler(this.id + 'Amount' + 'Dir', this.handleFlowChange.bind(this));
+    this.registerHandler(this.id + 'AmountDir', this.handleFlowChange.bind(this));
     this.registerHandler(this.id + 'Labels', this.handleLabelChange.bind(this));
     this.registerHandler(this.id + 'Save', this.handleSave.bind(this));
     this.registerHandler(this.id + 'Date', this.handleUpdateDate.bind(this));
     this.registerHandler(this.id + 'Amount', this.handleUpdateAmount.bind(this));
-    this.registerHandler(this.id + 'Book', this.handleBookUpdate.bind(this));
+    this.registerHandler(this.id + 'Book', this.handleBookChange.bind(this));
     this.registerHandler(this.id + 'Currency', this.handleCurrencyUpdate.bind(this));
 
     let containerProps = {
@@ -1547,8 +1496,6 @@ var loadFinance = function() {
   let api = new RestAPI('cashflow');
 
   api.get().then(data => {
-    console.log(data)
-
     const callInput = (data) => {
       const optionApi = new RestAPI('option');
       optionApi.get().then(options => {
@@ -1559,7 +1506,6 @@ var loadFinance = function() {
       });
     };
     const props = {
-      
       data: data.sort((a,b) => {
         return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
       }),
@@ -1571,5 +1517,23 @@ var loadFinance = function() {
   }).catch(err => {
     window.document.getElementById('app').innerHTML = err;
     //callback(500, 'text/html', err);
+  });
+}
+
+var loadErrors = function() {
+  // Register root node
+  let api = new RestAPI('errorLog');
+
+  api.get().then(data => {
+    const props = {
+      data: data.sort((a,b) => {
+        return ((new Date(b.time)).getTime() - (new Date(a.time)).getTime())
+      }),
+      id: 'logMainTable',
+    };
+
+    RComponent.buildRoot(props, p=>new ErrorTable(p));
+  }).catch(err => {
+    window.document.getElementById('app').innerHTML = err;
   });
 }

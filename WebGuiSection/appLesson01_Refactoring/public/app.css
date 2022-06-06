@@ -21,7 +21,6 @@
   cursor: default;
   margin: 0;
   padding: 0;
-  color: #BC7C9C;
   /* font-family: "Poppins", sans-serif; */
 }
 
@@ -62,6 +61,7 @@ body {
   min-width: 325px;
   font-size: 1.5rem;
   font-weight: 700;
+  color: #BC7C9C;
 }
 /* Menu classes */
 .m-menu {
@@ -382,7 +382,7 @@ nav {
   width: 100%;
   display: inline-flex;
   min-height: 40px;
-  
+  color: #BC7C9C;
 }
 .cashflowDate {
   align-items: center;
@@ -414,6 +414,7 @@ nav {
 .financialLabel {
   align-items: center;
   display: inline-flex;
+  color: #BC7C9C;
 }
 .cashflowButtonAdd {
   margin-right: 0;
@@ -482,7 +483,7 @@ nav {
   align-items: center;
   justify-content: flex-start;
   flex-direction: column;
-  color: white;
+  color: #BC7C9C;
   font-family: Roboto, sans-serif;
 }
 .datefield {
@@ -769,6 +770,7 @@ nav {
   padding: 6px 8px;
   font-weight: 600;
   font-family: inherit;
+  font-size: large;
   font-style: italic;
   display: block;
   list-style: none;
