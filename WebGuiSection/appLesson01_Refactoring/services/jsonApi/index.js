@@ -1,20 +1,22 @@
 var http = require('http');
 var StringDecoder = require('string_decoder').StringDecoder;
-var ResponseHelper = require('../responseHelper');
 
-const endpoint = "http://localhost:3002/entities";
-
-const fetchPromise = (details) => {
+const waitMin = 500;
+var count = 0;
+const fetchP = (requestOptions, payload) => {
+  count++;
   return new Promise((resolve, reject) => {
+    setTimeout(() => {
     var decoder = new StringDecoder('utf-8');
     var buffer = '';
-    const req = http.request('http://localhost:3002/entities?entity=cashflow', res => {
+    const req = http.request(requestOptions, res => {
       res.on('data', d => {
         buffer += decoder.write(d);
       });
 
       res.on('end', () => {
         buffer += decoder.end();
+	count--;
 
         resolve(JSON.parse(buffer));
       });
@@ -24,93 +26,85 @@ const fetchPromise = (details) => {
       reject(err);
     });
 
+    if (['POST','PUT'].indexOf(requestOptions.method)>=0) {
+      req.write(payload);
+    }
+
     req.end();
+    }, count * waitMin); 
   });
 }
 
-async function apiOperation(path, element, method, data) {
-  let fetchOptions = {method};
-  if (['POST', 'PUT'].includes(method)) {
-    fetchOptions = Object.assign({}, {body: JSON.stringify(data), headers: {'Content-Type': 'application/json'}}, fetchOptions);
-  }
-  let response = new ResponseHelper(await fetch(path, fetchOptions));
-
-  if (response.hasOkStatus()) {
-    return element.elementId || await response.json();
-  }
-
-  throw response.buildError(response);
-}
-
-let operationData = (element, route) => {
-  let data = element;
-  let res = {_id: element._id, entity: route, data: data, userId: element.userId};
-
-  delete data._id;
-  delete data.entity;
-
-  return res;
-}
-
+/**
+ * class RestAPI
+ */
 class RestAPI {
-  constructor(route, profile) {
-    this.route = route.trim();
-    this.path = endpoint;
-    this.profile = profile
+  /**
+   * constructor
+   * @param route The asset in DB to work with.
+   */
+  constructor(route) {
+    this.defaultReqArgs = {
+      port: 3002,
+      hostname: 'localhost',
+      path: '/'+route,
+      headers: {
+        'Content-Type': 'application/json',
+	connection: 'Close',
+      },
+    };
   }
+
+  genReqArgs(method, payload, id) {
+    const assign = {
+      method,
+      ...this.defaultReqArgs
+    };
+    if (['PUT', 'POST'].indexOf(method) >= 0) {
+      assign.headers['Content-Length'] = Buffer.
+        byteLength(payload);
+    }
+    if (['PUT','DELETE'].indexOf(method)>=0) {
+      assign.path += `/${id}`;
+    }
+    return assign;
+  }
+	
 
  async delete(element) {
-    const _path = `${this.path}/${element._id}`;
+    const details = this.
+      genReqArgs('DELETE', null, element._id);
 
-    apiOperation(_path, element, 'DELETE');
+    const response = await fetchP(details, element);
+ 
+    return response;
   }
- async insert(element) {
-    let data = operationData(element, this.route);
+  async insert(element) {
+    const details = this.
+      genReqArgs('POST', element);
 
-    apiOperation(this.path, element, 'POST', data);
+    const response = await fetchP(details, element);
+ 
+    return response;
   }
   async update(element) {
-    const _path = `${this.path}/${element._id}`;
-    let data = operationData(element, this.route);
+    const data = JSON.stringify(element);
+    const details = this.
+      genReqArgs('PUT', data, element._id);
 
-    apiOperation(_path, element, 'PUT', data);
+    const response = await fetchP(details, data);
+
+    return response;
   }
 
   async get() {
-    const filter = this.route;
-    const requestDetails = {
-      hostname: 'localhost',
-      port: 3002,
-      path: '/entities',
-      method: 'GET',
-    };
-    const convert = (item, route) => {
-      const filter = { entity: route, _id: item._id, userId: item.userId };
-      const obj = route === 'errorLog' ?
-          buildLogObj(item) :
-          item.data;
-    
-      return Object.assign(obj, filter);
-    }
+    const details = this.genReqArgs('GET');
 
-    console.log('before fetch')
-    const response = await fetchPromise(requestDetails);
-    console.log('after fetch')
-    console.log(JSON.stringify(response));
-
-    return response.map(o => convert(o, this.route));
-
-    return await fetchPromise(requestDetails);
-    //let response = new ResponseHelper(await fetchPromise(requestDetails), filter);
-    console.log('Before ok status')
-    if (response.hasOkStatus()) {
-      console.log('status OK')
-      let res = (filter === 'errorLog' ? await response.textToArray() : await response.jsonToArray());
-      return res;
-    }
-    
-    throw response.buildError(response);
+    const response = await fetchP(details);
+ 
+    return response;
   }
 }
 
 module.exports = RestAPI;
+

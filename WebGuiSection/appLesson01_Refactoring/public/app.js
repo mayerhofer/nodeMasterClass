@@ -165,6 +165,59 @@ class RestAPI {
   }
 }
 
+/**                                                   * class RestAPI                                      */                                                  class RestAPI {                                        /**                                                   * constructor
+   * @param route The asset in DB to work with.         */
+  constructor(route) {
+    this.defaultReqArgs = {                                port: 3002,
+      hostname: 'localhost',                               path: '/'+route,
+      headers: {
+        'Content-Type': 'application/json',
+        connection: 'Close',
+      },
+    };
+  }
+
+  genReqArgs(method, payload, id) {
+    const assign = {
+      method,
+      ...this.defaultReqArgs
+    };
+    if (['PUT', 'POST'].indexOf(method) >= 0) {
+      assign.headers['Content-Length'] = Buffer.
+        byteLength(payload);
+    }
+    if (['PUT','DELETE'].indexOf(method)>=0) {
+      assign.path += `/${id}`;                           }
+    return assign;                                     }                                                                                                                                                             async delete(element) {                                 const details = this.
+      genReqArgs('DELETE', null, element._id);       
+    const response = await fetch(details, element);
+                                                         return response;
+  }                                                    async insert(element) {
+    const details = this.
+      genReqArgs('POST', element);
+
+    const response = await fetch(details, element);
+
+    return response;
+  }
+  async update(element) {
+    const data = JSON.stringify(element);
+    const details = this.
+      genReqArgs('PUT', data, element._id);
+
+    const response = await fetch(details, data);
+
+    return response;
+  }
+
+  async get() {
+    const details = this.genReqArgs('GET');
+    const response = await fetch(details);
+
+    return response;
+  }
+}
+
 // Server - APIs - End JSON API
 // End Server - APIs
 
