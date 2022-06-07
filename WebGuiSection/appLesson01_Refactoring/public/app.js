@@ -400,7 +400,7 @@ class RComponent {
     textField: `
     <div id="{field.id}" class="container">
       <div class="textfield {field.invalidDiv}">
-        <input id="{field.id}Input" required class="{field.invalid}" type="text" maxlength="30" placeholder="{field.label}" onchange="window.application.callHandler(this,\'{field.id}Change\');" value="{field.value}" />
+        <input id="{field.id}Input" required class="{field.invalid}" type="text" placeholder="{field.label}" onchange="window.application.callHandler(this,\'{field.id}Change\');" value="{field.value}" />
         <label for="{field.id}Input" class="field-label {field.invalid}">{field.label}</label>
         <div class="containerIcon">
           <div id="{field.id}InputErrorIcon" class="invalidIcon {field.hideError}" onmouseover="displayInvalidTooltip">!</div>
