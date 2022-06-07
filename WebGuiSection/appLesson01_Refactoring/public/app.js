@@ -142,8 +142,6 @@ class RestAPI {
       ...this.defaultReqArgs
     };
     if (['PUT', 'POST'].indexOf(method) >= 0) {
-      assign.headers['Content-Length'] = Buffer.
-        byteLength(payload);
       assign.body = JSON.stringify(payload);
     }
     if (['PUT','DELETE'].indexOf(method)>=0) {
