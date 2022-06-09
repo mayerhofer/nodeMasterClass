@@ -893,6 +893,79 @@ class ErrorTable extends RComponent {
   }
 }
 /////////////////////////////////////////////
+// Page - Business Components - Liability Table
+class LiabilityTable extends RComponent {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      data: [],
+      last: 30,
+    };
+
+    this.util = {
+      formatter: {
+        date: (date) => {
+          let obj = new Date(date);
+          let day = obj.getDate();
+          let month = obj.getMonth();
+          let strDay = day < 10 ? '0' + day.toString() : day.toString();
+          let strMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month];
+  
+          return `${strDay}/${strMonth}`;
+        },
+        amount: (num) => {
+          if (typeof num === 'number') {
+            return num.toFixed(2);
+          } else {
+            return '--';
+          }
+        },
+      },
+    };
+  }
+
+  componentDidMount() {
+    const api = new RestAPI('liability');
+    const self = this;
+    
+    api.get().then(data => {
+      // At the very least sort by date descending to present meaninful information right on top.
+      // Should always have the most recent cashflows so next(elementId) can be passed to CREATE form.
+      data.sort((a,b) => {
+        return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
+      });
+      self.setState({data});
+    });
+  }
+
+  rowToHtml(row) {
+    const formatter = this.util.formatter;
+    const date = this.fill('simplediv', {className: 'cashflowDate', content: formatter.date(row.date)});
+    //const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
+    const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.direction ? ' income' : ' expense'), content: formatter.amount(row.amount)});
+
+    return this.fill('simplediv', {className: 'cashflowRow', content: date + amount});
+  }
+
+  render() {
+    const content = this.fill('scrollDiv', {
+      id: this.id + 'content', 
+      content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
+    });
+    const label = this.fill('simplediv', {className: 'financialLabel', content: (new Date()).toISOString().substring(0, 10)});
+    const buttonId = 'AddNewLiability';
+    const button = this.fill('button', {id: buttonId, className: 'liabilityButtonAdd', content: '<span>+</span>'});
+    const header = this.fill('simplediv', {className: 'financialHeader', content: label + button});
+
+    // this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
+    // this.registerHandler(buttonId, this.handleAddNew.bind(this));
+
+    return this.fill('div', {id: this.id, className: 'liabilityTable', content: header + content});
+  }
+}
+// Page - Business Components - End Liability Table
+/////////////////////////////////////////////
 // Page - Business Components - Finance Table
 class FinanceTable extends RComponent {
   constructor(props) {
@@ -1488,7 +1561,7 @@ class LiabilityModal extends RComponent {
 /////////////////////////////////////////////
 // Page - Menu Loaders
 
-var loadFinance = function() {
+const loadFinance = function() {
 
   // Register root node
   let api = new RestAPI('cashflow');
@@ -1518,7 +1591,7 @@ var loadFinance = function() {
   });
 }
 
-var loadErrors = function() {
+const loadErrors = function() {
   // Register root node
   let api = new RestAPI('errorLog');
 
@@ -1531,6 +1604,24 @@ var loadErrors = function() {
     };
 
     RComponent.buildRoot(props, p=>new ErrorTable(p));
+  }).catch(err => {
+    window.document.getElementById('app').innerHTML = err;
+  });
+}
+
+const loadLiability = function() {
+  // Register root node
+  let api = new RestAPI('liability');
+
+  api.get().then(data => {
+    const props = {
+      data: data.sort((a,b) => {
+        return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
+      }),
+      id: 'liabilityTable',
+    };
+
+    RComponent.buildRoot(props, p=>new LiabilityTable(p));
   }).catch(err => {
     window.document.getElementById('app').innerHTML = err;
   });
