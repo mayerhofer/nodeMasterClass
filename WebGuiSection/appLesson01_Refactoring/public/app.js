@@ -386,7 +386,7 @@ class RComponent {
     labelsField: `<div id="{field.id}" class="container"><ul class="direction">{field.content}</ul></div>`,
     simplediv: '<div class="{div.className}">{div.content}</div>',
     div: '<div id="{div.id}" class="{div.className}">{div.content}</div>',
-    scrollDiv: '<div id="{div.id}" class="scrollable" onscroll="window.application.callHandler(this,\'{div.id}\')">{div.content}</div>',
+    scrollDiv: '<div id="{div.id}" class="div--scrollable" onscroll="window.application.callHandler(this,\'{div.id}\')">{div.content}</div>',
     button: '<button id="{button.id}" type="button" class="{button.className}" onClick="window.application.callHandler(this,\'{button.id}\')">{button.content}</button>',
     simplebutton: '<button type="button" class="{button.className}" onClick="window.application.callHandler(this,\'{button.id}\')">{button.content}</button>',
     comboBox: '<div id={cb.id}><input class="{cb.className}" type="text" list="{cb.comboId}"{cb.value} onchange="window.application.callHandler(this,\'{cb.comboId}\')"><datalist id="{cb.comboId}" class="comboBox">{cb.options}</datalist></div>',
@@ -941,11 +941,11 @@ class LiabilityTable extends RComponent {
 
   rowToHtml(row) {
     const formatter = this.util.formatter;
-    const date = this.fill('simplediv', {className: 'cashflowDate', content: formatter.date(row.date)});
+    const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
     //const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
     const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content: formatter.amount(row.amount)});
 
-    return this.fill('simplediv', {className: 'cashflowRow', content: date + amount});
+    return this.fill('simplediv', {className: 'table__row', content: date + amount});
   }
 
   render() {
@@ -953,15 +953,15 @@ class LiabilityTable extends RComponent {
       id: this.id + 'content', 
       content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
     });
-    const label = this.fill('simplediv', {className: 'financialLabel', content: (new Date()).toISOString().substring(0, 10)});
+    const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
     const buttonId = 'AddNewLiability';
     const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
-    const header = this.fill('simplediv', {className: 'financialHeader', content: label + button});
+    const header = this.fill('simplediv', {className: 'table__header', content: label + button});
 
     // this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
     // this.registerHandler(buttonId, this.handleAddNew.bind(this));
 
-    return this.fill('div', {id: this.id, className: 'cashflowTable', content: header + content});
+    return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
   }
 }
 // Page - Business Components - End Liability Table
@@ -1023,11 +1023,12 @@ class FinanceTable extends RComponent {
   }
   rowToHtml(row) {
     const formatter = this.util.formatter;
-    const date = this.fill('simplediv', {className: 'cashflowDate', content: formatter.date(row.date)});
+    const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
     const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
     const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.direction ? ' income' : ' expense'), content: formatter.amount(row.amount)});
+    const box = this.fill('simplediv', {className: 'act-btn', content: 'aaa'});
 
-    return this.fill('simplediv', {className: 'cashflowRow', content: date + provider + amount});
+    return this.fill('simplediv', {className: 'table__row', content: date + provider + amount + box});
   }
   handleAddNew() {
     if (typeof this.props.callInput === 'function') {
@@ -1042,15 +1043,15 @@ class FinanceTable extends RComponent {
       id: this.id + 'content', 
       content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
     });
-    const label = this.fill('simplediv', {className: 'financialLabel', content: (new Date()).toISOString().substring(0, 10)});
+    const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
     const buttonId = 'AddNewCashflow';
     const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
-    const header = this.fill('simplediv', {className: 'financialHeader', content: label + button});
+    const header = this.fill('simplediv', {className: 'table__header', content: label + button});
 
     this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
     this.registerHandler(buttonId, this.handleAddNew.bind(this));
 
-    return this.fill('div', {id: this.id, className: 'cashflowTable', content: header + content});
+    return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
   }
 }
 /////////////////////////////////////////////
@@ -1545,7 +1546,7 @@ class LiabilityModal extends RComponent {
     const debtor = buildTb(buildProps('Debtor'));
     const buttonId = 'AddNewLiability';
     const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
-    const header = this.fill('simplediv', {className: 'financialHeader', content: button});
+    const header = this.fill('simplediv', {className: 'table__header', content: button});
     const content = `
     <h1>Add Liability</h1><br />${header}<br />
     ${debtor}<br />${amount}<br />
@@ -1612,18 +1613,7 @@ const loadErrors = function() {
 
 const loadLiability = function() {
   // Register root node
-  let api = new RestAPI('liability');
-
-  api.get().then(data => {
-    const props = {
-      data: data.sort((a,b) => {
-        return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
-      }),
-      id: 'liabilityTable',
-    };
-
-    RComponent.buildRoot(props, p=>new LiabilityTable(p));
-  }).catch(err => {
-    window.document.getElementById('app').innerHTML = err;
-  });
+  RComponent.buildRoot({
+    id: 'liabilityTable',
+  }, p=>new LiabilityTable(p));
 }

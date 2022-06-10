@@ -283,80 +283,6 @@ nav {
   padding-top: 6rem;
 }
 
-/* Table */
-.table {
-  background: white;
-
-  border-radius: 10px;
-  border-collapse: collapse;
-  border-color: gray;
-  border-spacing: 2px;
-
-  box-sizing: border-box;
-
-  margin: 0 auto;
-  overflow: hidden;
-  padding: 0;
-}
-
-.table thead tr {
-  height: 60px;
-  background: #36304a;
-}
-.table tbody tr {
-  height: 50px;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
-  font-size: 15px;
-  color: #808080;
-  line-height: 1.2;
-  font-weight: unset;
-}
-.table td:nth-child(1), .table th:nth-child(1) {
-  padding-left: 30px;
-}
-.table td:last-child, .table th:last-child {
-  padding-right: 30px;
-}
-
-.table td, .table th {
-  padding-left: 8px;
-  display: table-cell;
-}
-
-.table tbody tr:nth-child(even) {
-  background-color: #f5f5f5;
-}
-/* .table tbody tr td {
-  padding-left: 40% !important;
-  margin-bottom: 24px;
-} */
-.table tbody tr:hover {
-  background-color: #f5f5f5;
-  color: #555555;
-  cursor: pointer;
-}
-
-.table tr:last-child {
-  border: 0;
-}
-
-.pagination {
-  padding: 20px;
-  display: inline-flex;
-  justify-content: right;
-  width: fit-content;
-}
-
-.button {
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-}
 .buttons {
   margin: 0;
   padding: 0;
@@ -365,89 +291,6 @@ nav {
   justify-content: right;
 }
 
-/* Business: Finance Table */
-.cashflowTable {
-  width: 100%;
-  display: inline-block;
-  font-size: 22px;
-}
-.scrollable {
-  height: 600px;
-  overflow: auto;
-}
-.cashflowTable .cashflowRow:nth-child(even) {
-  background-color: #7A5980;
-}
-.cashflowRow {
-  width: 100%;
-  display: inline-flex;
-  min-height: 40px;
-  color: #BC7C9C;
-}
-.cashflowDate {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  width: 20%;
-  text-align: center;
-  padding: 0px 5px 0px 5px;
-}
-.cashflowProvider {
-  align-items: center;
-  display: inline-flex;
-  width: 50%;
-  padding: 0px 5px 0px 5px;
-}
-.cashflowAmount {
-  align-items: center;
-  display: inline-flex;
-  justify-content: flex-end;
-  text-align: right;
-  width: 20%;
-  padding: 0px 5px 0px 5px;
-}
-.income {
-  color: blue;
-}
-.expense {
-  color: red;
-}
-.financialHeader {
-  width: 100%;
-  display: flex;
-  text-align: center;
-}
-.financialLabel {
-  align-items: center;
-  display: inline-flex;
-  color: #BC7C9C;
-}
-.cashflowButtonAdd {
-  margin-right: 0;
-  margin-left: auto;
-  background-color: transparent;
-  border: 3px;
-  border-radius: 30%;
-  color: #CF9893;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-flex;
-}
-.cashflowButtonAdd span {
-  display: block;
-  height: 30px;
-  width: 30px;
-  line-height: 30px;
-
-  -moz-border-radius: 15px; /* or 50% */
-  border-radius: 15px; /* or 50% */
-
-  background-color: #7A5980;
-  text-align: center;
-  font-size: 2em;
-  font-weight: 700;
-}
 .page {
   width: 100vw;
   margin: 0;
@@ -458,6 +301,113 @@ nav {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+}
+.div--scrollable {
+  height: 600px;
+  overflow: auto;
+}
+
+/* Business: Finance Table, Liability Table, ...
+ * Block: table-wrapper 
+ * Elements: header, body { row, cell, ...}, ...
+ */
+.table__wrapper {
+  display: inline-block;
+  font-size: 22px;
+  width: 100%;
+}
+.table__row {
+  color: #BC7C9C;
+  display: inline-flex;
+  min-height: 40px;
+  width: 100%;
+}
+.table__row:nth-child(even) {
+  background-color: #7A5980;
+}
+.table__row:hover, 
+.table__row:nth-child(even):hover {
+  background-color: #FAFBFC;
+  cursor: pointer;
+}
+.act-btn {
+  display: none;
+}
+.table__row:hover + .act-btn, 
+.table__row:nth-child(even):hover + .act-btn {
+  background-color: black;
+  z-index: 10;
+  display: inline;
+}
+.table__header {
+  display: flex;
+  text-align: center;
+  width: 100%;
+}
+.table__header-label {
+  align-items: center;
+  color: #BC7C9C;
+  display: inline-flex;
+}
+.cashflowButtonAdd {
+  background-color: transparent;
+  border: 3px;
+  border-radius: 30%;
+  color: #CF9893;
+  display: inline-flex;
+  margin-right: 0;
+  margin-left: auto;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+}
+.cashflowButtonAdd span {
+  background-color: #7A5980;
+
+  border-radius: 15px; /* or 50% */
+  -moz-border-radius: 15px; /* or 50% */
+
+  display: block;
+  font-size: 2em;
+  font-weight: 700;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  width: 30px;
+}
+
+
+/* Business: Form fields - Date, Text, Dropdowns,...
+ * Block: table-wrapper 
+ * Elements: header, body { row, cell, ...}, ...
+ */
+.form-date-div {
+  align-items: center;
+  display: inline-flex;
+  padding: 0px 5px 0px 5px;
+  justify-content: center;
+  width: 20%;
+  text-align: center;
+}
+.cashflowProvider {
+  align-items: center;
+  display: inline-flex;
+  padding: 0px 5px 0px 5px;
+  width: 50%;
+}
+.cashflowAmount {
+  align-items: center;
+  display: inline-flex;
+  padding: 0px 5px 0px 5px;
+  justify-content: flex-end;
+  text-align: right;
+  width: 20%;
+}
+.income {
+  color: blue;
+}
+.expense {
+  color: red;
 }
 
 .liability {
@@ -1005,14 +955,5 @@ nav {
 }
 
 
-/* ABS */
-/* ====================================================== */
-.abs-site-link {
-  position: fixed;
-  bottom: 40px;
-  left: 20px;
-  color: hsla(0, 0%, 0%, .5);
-  font-size: 16px;
-}
 /* Forms - End Currency dropdown menu */
 /* ***************************************************************** */
