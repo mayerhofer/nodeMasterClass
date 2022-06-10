@@ -406,6 +406,12 @@ nav {
   width: 20%;
   padding: 0px 5px 0px 5px;
 }
+.income {
+  color: blue;
+}
+.expense {
+  color: red;
+}
 .financialHeader {
   width: 100%;
   display: flex;

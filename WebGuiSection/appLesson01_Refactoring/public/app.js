@@ -943,7 +943,7 @@ class LiabilityTable extends RComponent {
     const formatter = this.util.formatter;
     const date = this.fill('simplediv', {className: 'cashflowDate', content: formatter.date(row.date)});
     //const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
-    const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.direction ? ' income' : ' expense'), content: formatter.amount(row.amount)});
+    const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content: formatter.amount(row.amount)});
 
     return this.fill('simplediv', {className: 'cashflowRow', content: date + amount});
   }
@@ -955,13 +955,13 @@ class LiabilityTable extends RComponent {
     });
     const label = this.fill('simplediv', {className: 'financialLabel', content: (new Date()).toISOString().substring(0, 10)});
     const buttonId = 'AddNewLiability';
-    const button = this.fill('button', {id: buttonId, className: 'liabilityButtonAdd', content: '<span>+</span>'});
+    const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
     const header = this.fill('simplediv', {className: 'financialHeader', content: label + button});
 
     // this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
     // this.registerHandler(buttonId, this.handleAddNew.bind(this));
 
-    return this.fill('div', {id: this.id, className: 'liabilityTable', content: header + content});
+    return this.fill('div', {id: this.id, className: 'cashflowTable', content: header + content});
   }
 }
 // Page - Business Components - End Liability Table
@@ -1259,6 +1259,7 @@ class FinanceForm extends RComponent {
 
   handleSave() {
     const dt = this.state.date;
+    const cfid = this.state.nextElementId;
     const newCashFlow = {
       date: Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()),
       currency: this.state.currency,
@@ -1269,7 +1270,7 @@ class FinanceForm extends RComponent {
       labels: this.state.labels,
       book: this.state.book,
       amount: Number.parseFloat(this.state.amount),
-      elementId: this.state.nextElementId,
+      elementId: cfid,
     };
 
     console.log('saving', newCashFlow);
@@ -1284,7 +1285,7 @@ class FinanceForm extends RComponent {
           const obj = this.state.liability;
           
           obj.date = newCashFlow.date;
-          obj.cashflowId = id;
+          obj.cashflowId = cfid;
           obj.elementId = data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1;
 
           console.log('saving', obj);
