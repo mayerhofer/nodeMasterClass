@@ -319,7 +319,7 @@ nav {
 .table__row {
   color: #BC7C9C;
   display: inline-flex;
-  min-height: 40px;
+  min-height: 4rem;
   width: 100%;
 }
 .table__row:nth-child(even) {
@@ -331,13 +331,19 @@ nav {
   cursor: pointer;
 }
 .act-btn {
-  display: none;
+	position: absolute;
+	color: black;
+	top: 0;
+	right: 2rem;
+	width: 100px;
+	min-height: 4rem;
+	background-color: black;
+	z-index: 10;
+	display: none;
 }
-.table__row:hover + .act-btn, 
-.table__row:nth-child(even):hover + .act-btn {
-  background-color: black;
-  z-index: 10;
-  display: inline;
+.table__row:hover .act-btn, 
+.table__row:nth-child(even):hover .act-btn {
+  display: inherit;
 }
 .table__header {
   display: flex;
