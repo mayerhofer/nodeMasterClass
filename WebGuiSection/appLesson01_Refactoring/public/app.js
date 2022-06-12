@@ -1046,9 +1046,12 @@ class FinanceTable extends RComponent {
     const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
     const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
     const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.direction ? ' income' : ' expense'), content: formatter.amount(row.amount)});
-    const box = this.fill('simplediv', {className: 'act-btn', content: 'aaa'});
+    const editImg = this.fill('image', {img: RComponent.images64['edit']});
+    const delBtn = this.fill('button', {id: row.elementId + 'DelBtn', className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
+    const editBtn = this.fill('button', {id: row.elementId + 'EditBtn', className: 'act-btn', content: editImg});
+    const actionButtons = this.fill('simplediv', {className: 'actions-wrapper', content: editBtn+delBtn});
 
-    return this.fill('simplediv', {className: 'table__row', content: date + provider + amount + box});
+    return this.fill('simplediv', {className: 'table__row', content: date + provider + amount + actionButtons});
   }
   handleAddNew() {
     if (typeof this.props.callInput === 'function') {

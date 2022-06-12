@@ -331,18 +331,22 @@ nav {
   cursor: pointer;
 }
 .act-btn {
+	height: 4rem;
+}
+.actions-wrapper {
 	position: absolute;
 	color: black;
 	top: 0;
 	right: 2rem;
 	width: 100px;
-	min-height: 4rem;
+	height: 4rem;
+	max-height: 4rem;
 	background-color: black;
 	z-index: 10;
 	display: none;
 }
 .table__row:hover .act-btn, 
-.table__row:nth-child(even):hover .act-btn {
+.table__row:nth-child(even):hover .actions-wrapper {
   display: inherit;
 }
 .table__header {
