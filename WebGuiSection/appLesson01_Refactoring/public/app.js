@@ -1460,7 +1460,7 @@ class FinanceForm extends RComponent {
       },
     ];
     const labelImgArray = labelImages.map(label => 
-      this.fill('labelField', {id: this.id + 'Labels', checked: this.state.labels.indexOf(label.label) >= 0 ? 'checked' : '', ...label}));
+      this.fill('labelField', {id: this.id + 'Labels', checked: Array.isArray(this.state.labels) && this.state.labels.indexOf(label.label) >= 0 ? 'checked' : '', ...label}));
       
     const labelProps = {
       id: this.id + 'Labels',
