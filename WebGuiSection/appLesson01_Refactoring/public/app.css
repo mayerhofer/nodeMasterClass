@@ -327,21 +327,28 @@ nav {
 }
 .table__row:hover, 
 .table__row:nth-child(even):hover {
-  background-color: #FAFBFC;
+  background-color: #A3C3D9; /* #FAFBFC; */
   cursor: pointer;
 }
 .act-btn {
-	height: 4rem;
+	height: 3.9rem;
+  width: 3.9rem;
+  border-radius: 30%;
+  background-color: transparent;
+}
+.act-btn img {
+  height: 3rem;
+  width: 3rem;
+  margin: auto;
 }
 .actions-wrapper {
+  background-color: transparent;
 	position: absolute;
-	color: black;
 	top: 0;
 	right: 2rem;
 	width: 100px;
 	height: 4rem;
 	max-height: 4rem;
-	background-color: black;
 	z-index: 10;
 	display: none;
 }
