@@ -181,9 +181,8 @@ class RestAPI {
   }
 
   async update(element) {
-    const data = JSON.stringify(element);
     const details = this.
-      genReqArgs('PUT', data, element._id);
+      genReqArgs('PUT', element, element._id);
 
     const response = await this.myFetch(details);
 
@@ -1041,6 +1040,16 @@ class FinanceTable extends RComponent {
       self.setState({data});
     });
   }
+  handleDelete(element) {
+    const api = new RestAPI('cashflow');
+
+    api.delete(element);
+  }
+  handleEdit(element) {
+    if (typeof this.props.callInput === 'function') {
+      this.props.callInput(this.props.data, element);
+    }
+  }
   rowToHtml(row) {
     const formatter = this.util.formatter;
     const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
@@ -1050,6 +1059,9 @@ class FinanceTable extends RComponent {
     const delBtn = this.fill('button', {id: row.elementId + 'DelBtn', className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
     const editBtn = this.fill('button', {id: row.elementId + 'EditBtn', className: 'act-btn', content: editImg});
     const actionButtons = this.fill('simplediv', {className: 'actions-wrapper', content: editBtn+delBtn});
+
+    this.registerHandler(row.elementId + 'DelBtn', () => this.handleDelete(row));
+    this.registerHandler(row.elementId + 'EditBtn', () => this.handleEdit(row));
 
     return this.fill('simplediv', {className: 'table__row', content: date + provider + amount + actionButtons});
   }
@@ -1205,17 +1217,26 @@ class FinanceForm extends RComponent {
   constructor(props) {
     super(props);
 
+    if (typeof (this.props.element) === 'object') {
+      this.isEditMode = true;
+    } else if (Array.isArray(this.props.data)) {
+      this.isEditMode = false;
+    } else {
+      throw 'Missing prop cashflow array or cashflow element';
+    }
+
     this.state = {
       amount: 10,
-      nextElementId: this.props.data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1,
-      country: this.props.country ?? 'Spain',
-      currency: this.props.currency ?? 'EUR',
-      date: this.props.date ?? new Date(),
-      direction: this.props.direction ?? false,
-      description: this.props.description ?? '',
-      provider: this.props.provider ?? '',
-      labels: this.props.labels ?? [''],
-      book: this.props.book ?? 'M EUR',
+      nextElementId: this.isEditMode ? this.props.element.elementId :
+        this.props.data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1,
+      country: this.isEditMode ? props.element.country : 'Spain',
+      currency: this.isEditMode ? props.element.currency : 'EUR',
+      date: this.isEditMode ? new Date(props.element.date) : new Date(),
+      direction: this.isEditMode ? props.element.direction : false,
+      description: this.isEditMode ? props.element.description : '',
+      provider: this.isEditMode ? props.element.provider : '',
+      labels: this.isEditMode ? props.element.labels : [''],
+      book: this.isEditMode ? props.element.book : 'M EUR',
       validationState: {
         provider: {
           validDef: {
@@ -1296,28 +1317,35 @@ class FinanceForm extends RComponent {
       amount: Number.parseFloat(this.state.amount),
       elementId: cfid,
     };
+    const saveObj = this.isEditMode ? Object.assign({}, this.props.element, newCashFlow) : newCashFlow;
 
     console.log('saving', newCashFlow);
 
+    const saveLiability = this.saveLiability.bind(this);
+
     const cfApi = new RestAPI('cashflow');
-    
-    cfApi.insert(newCashFlow).then(id => {
-      if (this.state.liability) {
-        const lApi = new RestAPI('liability');
+    if (this.isEditMode) {
+      cfApi.update(saveObj).then(id => saveLiability(id));
+    } else {
+      cfApi.insert(saveObj).then(id => saveLiability(id));
+    }
+  }
+  saveLiability(id) {
+    if (this.state.liability) {
+      const lApi = new RestAPI('liability');
 
-        lApi.get().then(data => {
-          const obj = this.state.liability;
-          
-          obj.date = newCashFlow.date;
-          obj.cashflowId = cfid;
-          obj.elementId = data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1;
+      lApi.get().then(data => {
+        const obj = this.state.liability;
+        
+        obj.date = newCashFlow.date;
+        obj.cashflowId = cfid;
+        obj.elementId = data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1;
 
-          console.log('saving', obj);
-  
-          lApi.insert(obj);
-        });
-      }
-    });
+        console.log('saving', obj);
+
+        lApi.insert(obj);
+      });
+    }
   }
   handleProviderChange(provider) {
     this.setState({provider});
@@ -1592,13 +1620,13 @@ const loadFinance = function() {
   let api = new RestAPI('cashflow');
 
   api.get().then(data => {
-    const callInput = (data) => {
+    const callInput = (data, element) => {
       const optionApi = new RestAPI('option');
       optionApi.get().then(options => {
         const labelOptions = options.filter(option => option.combo === 'labels').map(o => o.description);
         const bookOptions = options.filter(option => option.combo === 'books');
 
-        RComponent.buildRoot({id: 'fincForm', labelOptions, bookOptions, data}, p => new FinanceForm(p));
+        RComponent.buildRoot({id: 'fincForm', labelOptions, bookOptions, data, element}, p => new FinanceForm(p));
       });
     };
     const props = {
