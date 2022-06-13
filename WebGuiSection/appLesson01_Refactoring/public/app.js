@@ -1037,7 +1037,7 @@ class FinanceTable extends RComponent {
       data.sort((a,b) => {
         return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
       });
-      self.setState({data});
+      self.setState({data: data.filter(d => d.amount >= 2000)});
     });
   }
   handleDelete(element) {
@@ -1076,14 +1076,15 @@ class FinanceTable extends RComponent {
   render() {
     const content = this.fill('scrollDiv', {
       id: this.id + 'content', 
-      content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
+      //content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
+      content: this.state.data.map(this.rowToHtml.bind(this)).join('')
     });
     const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
     const buttonId = 'AddNewCashflow';
     const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
     const header = this.fill('simplediv', {className: 'table__header', content: label + button});
 
-    this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
+    //this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
     this.registerHandler(buttonId, this.handleAddNew.bind(this));
 
     return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
@@ -1212,7 +1213,7 @@ class FlagCombo extends RComponent {
 // Page - Components - End Flag Combo
 /////////////////////////////////////////////
 /////////////////////////////////////////////
-// Page - Components - FinaceForm
+// Page - Components - FinanceForm
 class FinanceForm extends RComponent {
   constructor(props) {
     super(props);
@@ -1226,10 +1227,10 @@ class FinanceForm extends RComponent {
     }
 
     this.state = {
-      amount: 10,
+      amount: this.isEditMode ? props.element.amount : 10,
       nextElementId: this.isEditMode ? this.props.element.elementId :
         this.props.data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1,
-      country: this.isEditMode ? props.element.country : 'Spain',
+      country: this.isEditMode ? props.element.location : 'Spain',
       currency: this.isEditMode ? props.element.currency : 'EUR',
       date: this.isEditMode ? new Date(props.element.date) : new Date(),
       direction: this.isEditMode ? props.element.direction : false,
@@ -1289,8 +1290,8 @@ class FinanceForm extends RComponent {
 
     this.setState({currency: e.value, validationState});
   }
-  handleFlowChange(e) {
-    this.setState({direction: e.id === 'expense' ? false : true});
+  handleDirectionChange(e) {
+    this.setState({direction: e.value === 'income'});
   }
   handleLabelChange(e) {
     this.setState({labels: [e.value]});
@@ -1493,7 +1494,7 @@ class FinanceForm extends RComponent {
     let actionButtonProps = {id: this.id + 'ActionButtons', className: 'buttons', content: [liability, save].join('')};
     let actionButtons = this.fill('simplediv', actionButtonProps);
 
-    this.registerHandler(this.id + 'AmountDir', this.handleFlowChange.bind(this));
+    this.registerHandler(this.id + 'AmountDir', this.handleDirectionChange.bind(this));
     this.registerHandler(this.id + 'Labels', this.handleLabelChange.bind(this));
     this.registerHandler(this.id + 'Save', this.handleSave.bind(this));
     this.registerHandler(this.id + 'Date', this.handleUpdateDate.bind(this));
@@ -1519,7 +1520,7 @@ class LiabilityModal extends RComponent {
     super(props);
 
     this.state = {
-      direction: false,
+      liability: false,
       amount: 10,
       currency: 'EUR',
       debtor: 'Cris Carnaval',
@@ -1546,13 +1547,14 @@ class LiabilityModal extends RComponent {
     this.setState({amount: e.value});
   }
   handleDirectionChange(e) {
-    this.setState({direction: e.value === 'income'});
+    this.setState({liability: e.value === 'income'});
   }
   handleSave() {
     let dt = new Date();
     const obj = {
       dueIn: Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()),
       source: this.state.debtor,
+      liability: this.state.liability,
       amount: Number.parseFloat(this.state.amount),
       cashflowId: -1,
       elementId: -1,
