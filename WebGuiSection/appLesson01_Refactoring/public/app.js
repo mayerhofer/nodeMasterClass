@@ -1037,7 +1037,7 @@ class FinanceTable extends RComponent {
       data.sort((a,b) => {
         return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
       });
-      self.setState({data: data.filter(d => d.amount > 500 && d.amount < 1000)});
+      self.setState({data: data.filter(d => d.amount < 500)});
     });
   }
   handleDelete(element) {
