@@ -497,7 +497,7 @@ class RComponent {
       <input id="cb{btn.id}" class="m-modal__toggle" type="checkbox">
       <div class="m-modal__backdrop"></div>
       <div class="m-modal__content">{btn.content}</div>
-      <img src="data:image/png;base64,{btn.img}"/>
+      <img class="img-swap" src="data:image/png;base64,{btn.img}"/>
     </div>`,
     save: `
       <button id={save.id} class="{save.className}" onclick="window.application.callHandler(this, '{save.id}')" {save.disabled}> 
@@ -983,6 +983,21 @@ class LiabilityTable extends RComponent {
     return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
   }
 }
+var count = 0;
+const updateAll = cfs => {
+  const cf = cfs.pop();
+  if (cf) {
+    setTimeout(() => {
+      const api = new RestAPI('cashflow');
+      count++;
+
+      console.log(count);
+
+      api.update(cf);
+      updateAll(cfs);
+    }, 1000);
+  }
+}
 // Page - Business Components - End Liability Table
 /////////////////////////////////////////////
 // Page - Business Components - Finance Table
@@ -1037,7 +1052,10 @@ class FinanceTable extends RComponent {
       data.sort((a,b) => {
         return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
       });
-      self.setState({data: data.filter(d => d.amount < 500)});
+      const toUpdate = data.filter(d => d.amount < 500 && d.direction).map(d => Object.assign({}, d, {direction: false}));
+      console.log('updating ' + toUpdate.length.toString());
+      updateAll(toUpdate);
+      self.setState({data: data});
     });
   }
   handleDelete(element) {
