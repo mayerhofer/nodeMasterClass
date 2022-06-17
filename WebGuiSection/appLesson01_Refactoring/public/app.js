@@ -1344,12 +1344,12 @@ class FinanceForm extends RComponent {
 
     const cfApi = new RestAPI('cashflow');
     if (this.isEditMode) {
-      cfApi.update(saveObj).then(id => saveLiability(id));
+      cfApi.update(saveObj).then(() => saveLiability(cfid, newCashFlow));
     } else {
-      cfApi.insert(saveObj).then(id => saveLiability(id));
+      cfApi.insert(saveObj).then(() => saveLiability(cfid, newCashFlow));
     }
   }
-  saveLiability(id) {
+  saveLiability(cfid, newCashFlow) {
     if (this.state.liability) {
       const lApi = new RestAPI('liability');
 
