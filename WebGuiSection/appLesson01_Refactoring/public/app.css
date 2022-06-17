@@ -415,6 +415,23 @@ nav {
   padding: 0px 5px 0px 5px;
   width: 50%;
 }
+.longtext {
+  width: 60%;
+}
+.longtext span {
+  align-items: center;
+  display: inline-flex;
+  padding: 0px 5px 0px 5px;
+}
+.btn-trace {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn-trace img {
+  width: 4rem;
+  height: 4rem;
+}
 .cashflowAmount {
   align-items: center;
   display: inline-flex;
