@@ -1426,14 +1426,14 @@ class FinanceForm extends RComponent {
     const cfApi = new RestAPI('cashflow');
     if (this.isEditMode) {
       cfApi.update(saveObj).then(() => {
-	setTimeout(() => {
-	  saveLiabi(cfid, newCashFlow));
+	      setTimeout(() => {
+	        saveLiabi(cfid, newCashFlow);
         }, 1000);
       });
     } else {
       cfApi.insert(saveObj).then(() => {
-	setTimeout(() => {
-	  saveLiabi(cfid, newCashFlow));
+	      setTimeout(() => {
+	        saveLiabi(cfid, newCashFlow);
         }, 1000);
       });
     }
