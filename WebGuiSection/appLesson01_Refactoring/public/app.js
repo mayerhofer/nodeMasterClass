@@ -208,8 +208,8 @@ const log = (type, data) => {
         ...data,
       };
       api.insert(errObj)
-	.catch(ex => window
-	  .alert(ex.message));
+	      .catch(ex => window
+	        .alert(ex.message));
     } catch (ex) {
       window.alert('Could not log: ' + ex.message);
     }
@@ -1442,35 +1442,43 @@ class FinanceForm extends RComponent {
     try {
       if (this.state.liability) {
         const lApi = 
-	  new RestAPI('liability');
+	        new RestAPI('liability');
 
-        lApi.get().then(data => {
-          const obj = {
-	    date: newCashFlow.date,
-            cashflowId: cfid,
-            elementId: data
-	      .map(d => d.elementId)
-	      .filter(id => id > 0)
-	      .sort((a,b)=>a-b).pop() + 1,
-	    ...this.state.liability,
-	  };
+        lApi.get().then(liabilities => {
+          const found = Array.from(liabilities).find(l => l.cashflowId === cfid);
 
-          console.log('saving', obj);
+          if (found) {
+            //update
+            const obj = Object.assign({}, found, {
+              date: newCashFlow.date,
+              cashflowId: cfid,
+              elementId: found.elementId,
+              _id: found._id,
+            });
 
-          lApi.insert(obj);
+            log('info', {message: 'saving liability', stackTrace: `CF id: ${cfid.toString()}`});
+
+            lApi.update(obj);
+          } else {
+            // insert
+            const obj = {
+              date: newCashFlow.date,
+              cashflowId: cfid,
+              elementId: liabilities
+                .map(d => d.elementId)
+                .filter(id => id > 0)
+                .sort((a,b)=>a-b).pop() + 1,
+              ...this.state.liability,
+            };
+
+            log('info', {message: 'saving liability', stackTrace: `CF id: ${cfid.toString()}`});
+
+            lApi.insert(obj);
+          }
         });
       }
     } catch (ex) {
-      setTimeout(() => {
-        const api = 
-	  new RestAPI('errorLog');
-        const errObj = {
-	  time: (new Date()).getTime(),
-	  type: 'error',
-	  ...ex,
-        };
-        api.insert(errObj);
-      }, 1000);
+      log('error', ex);
     }
   }
   handleProviderChange(provider) {
