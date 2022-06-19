@@ -197,6 +197,25 @@ class RestAPI {
   }
 }
 
+const log = (type, data) => {
+  setTimeout(() => {
+    try {
+      const api = 
+        new RestAPI('errorLog');
+      const errObj = {
+        time: (new Date()).getTime(),
+        type,
+        ...data,
+      };
+      api.insert(errObj)
+	.catch(ex => window
+	  .alert(ex.message));
+    } catch (ex) {
+      window.alert('Could not log: ' + ex.message);
+    }
+  }, 1000);
+}
+
 // Server - APIs - End JSON API
 // End Server - APIs
 
@@ -1400,31 +1419,58 @@ class FinanceForm extends RComponent {
     const saveObj = this.isEditMode ? Object.assign({}, this.props.element, newCashFlow) : newCashFlow;
 
     console.log('saving', newCashFlow);
+    log('info', {message: 'Saving cashflow', stackTrace: newCashFlow.provider });
 
-    const saveLiability = this.saveLiability.bind(this);
+    const saveLiabi = this.saveLiability.bind(this);
 
     const cfApi = new RestAPI('cashflow');
     if (this.isEditMode) {
-      cfApi.update(saveObj).then(() => saveLiability(cfid, newCashFlow));
+      cfApi.update(saveObj).then(() => {
+	setTimeout(() => {
+	  saveLiabi(cfid, newCashFlow));
+        }, 1000);
+      });
     } else {
-      cfApi.insert(saveObj).then(() => saveLiability(cfid, newCashFlow));
+      cfApi.insert(saveObj).then(() => {
+	setTimeout(() => {
+	  saveLiabi(cfid, newCashFlow));
+        }, 1000);
+      });
     }
   }
   saveLiability(cfid, newCashFlow) {
-    if (this.state.liability) {
-      const lApi = new RestAPI('liability');
+    try {
+      if (this.state.liability) {
+        const lApi = 
+	  new RestAPI('liability');
 
-      lApi.get().then(data => {
-        const obj = this.state.liability;
-        
-        obj.date = newCashFlow.date;
-        obj.cashflowId = cfid;
-        obj.elementId = data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1;
+        lApi.get().then(data => {
+          const obj = {
+	    date: newCashFlow.date,
+            cashflowId: cfid,
+            elementId: data
+	      .map(d => d.elementId)
+	      .filter(id => id > 0)
+	      .sort((a,b)=>a-b).pop() + 1,
+	    ...this.state.liability,
+	  };
 
-        console.log('saving', obj);
+          console.log('saving', obj);
 
-        lApi.insert(obj);
-      });
+          lApi.insert(obj);
+        });
+      }
+    } catch (ex) {
+      setTimeout(() => {
+        const api = 
+	  new RestAPI('errorLog');
+        const errObj = {
+	  time: (new Date()).getTime(),
+	  type: 'error',
+	  ...ex,
+        };
+        api.insert(errObj);
+      }, 1000);
     }
   }
   handleProviderChange(provider) {
