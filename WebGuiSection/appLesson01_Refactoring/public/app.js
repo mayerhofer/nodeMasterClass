@@ -1144,6 +1144,78 @@ class FlagCombo extends RComponent {
 }
 // Page - Components - End Flag Combo
 /////////////////////////////////////////////
+const labelImages = [
+  {
+    label: 'Work',
+    alias: 'work',
+    img: RComponent.images64['work'],
+  },
+  {
+    label: 'Health',
+    alias: 'health',
+    img: RComponent.images64['health'],
+  },
+  {
+    label: 'Investments',
+    alias: 'investment',
+    img: RComponent.images64['investment'],
+  },
+  {
+    label: 'Dinner',
+    alias: 'dinner',
+    img: RComponent.images64['dinner'],
+  },
+  {
+    label: 'Grosseries',
+    alias: 'market',
+    img: RComponent.images64['market'],
+  },
+  {
+    label: 'Transport',
+    alias: 'transport',
+    img: RComponent.images64['transport'],
+  },
+  {
+    label: 'Leisure',
+    alias: 'leisure',
+    img: RComponent.images64['leisure'],
+  },
+  {
+    label: 'Service',
+    alias: 'service',
+    img: RComponent.images64['service'],
+  },
+  {
+    label: 'House',
+    alias: 'house',
+    img: RComponent.images64['house'],
+  },
+  {
+    label: 'Tourism',
+    alias: 'tourism',
+    img: RComponent.images64['tourism'],
+  },
+  {
+    label: 'Sweets',
+    alias: 'sweet',
+    img: RComponent.images64['sweet'],
+  },
+  {
+    label: 'Gift',
+    alias: 'gift',
+    img: RComponent.images64['gift'],
+  },
+  {
+    label: 'Education',
+    alias: 'study',
+    img: RComponent.images64['study'],
+  },
+  {
+    label: 'Tax',
+    alias: 'tax',
+    img: RComponent.images64['tax'],
+  },
+];
 /////////////////////////////////////////////
 // Page - Components - FinanceForm
 class FinanceForm extends RComponent {
@@ -1354,78 +1426,7 @@ class FinanceForm extends RComponent {
       incomeChecked: this.state.direction ? 'checked' : '',
       value: this.state.amount,
     };
-    const labelImages = [
-      {
-        label: 'Work',
-        alias: 'work',
-        img: RComponent.images64['work'],
-      },
-      {
-        label: 'Health',
-        alias: 'health',
-        img: RComponent.images64['health'],
-      },
-      {
-        label: 'Investments',
-        alias: 'investment',
-        img: RComponent.images64['investment'],
-      },
-      {
-        label: 'Dinner',
-        alias: 'dinner',
-        img: RComponent.images64['dinner'],
-      },
-      {
-        label: 'Grosseries',
-        alias: 'market',
-        img: RComponent.images64['market'],
-      },
-      {
-        label: 'Transport',
-        alias: 'transport',
-        img: RComponent.images64['transport'],
-      },
-      {
-        label: 'Leisure',
-        alias: 'leisure',
-        img: RComponent.images64['leisure'],
-      },
-      {
-        label: 'Service',
-        alias: 'service',
-        img: RComponent.images64['service'],
-      },
-      {
-        label: 'House',
-        alias: 'house',
-        img: RComponent.images64['house'],
-      },
-      {
-        label: 'Tourism',
-        alias: 'tourism',
-        img: RComponent.images64['tourism'],
-      },
-      {
-        label: 'Sweets',
-        alias: 'sweet',
-        img: RComponent.images64['sweet'],
-      },
-      {
-        label: 'Gift',
-        alias: 'gift',
-        img: RComponent.images64['gift'],
-      },
-      {
-        label: 'Education',
-        alias: 'study',
-        img: RComponent.images64['study'],
-      },
-      {
-        label: 'Tax',
-        alias: 'tax',
-        img: RComponent.images64['tax'],
-      },
-    ];
+    
     const labelImgArray = labelImages.map(label => 
       this.fill('labelField', {id: this.id + 'Labels', checked: Array.isArray(this.state.labels) && this.state.labels.indexOf(label.label) >= 0 ? 'checked' : '', ...label}));
       
@@ -1479,6 +1480,119 @@ class FinanceForm extends RComponent {
 }
 
 // Page - Components - End FinaceForm
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+// Page - Components - Wish List Form
+class WishListForm extends RComponent {
+  constructor(props) {
+    super(props);
+
+    if (typeof (this.props.element) === 'object') {
+      this.isEditMode = true;
+    } else if (Array.isArray(this.props.data)) {
+      this.isEditMode = false;
+    } else {
+      throw 'Missing prop cashflow array or cashflow element';
+    }
+
+    this.state = {
+      nextElementId: this.isEditMode ? this.props.element.elementId : this.props.data.length > 0 ?
+        this.props.data.map(d => d.elementId).filter(id => id > 0).sort((a,b)=>a-b).pop() + 1 : 1,
+      date: this.isEditMode ? new Date(props.element.date) : new Date(),
+      what: this.isEditMode ? props.element.what : '',
+      labels: this.isEditMode ? [props.element.label] : [''],
+      validationState: {
+        what: {
+          validDef: {
+            required: true,
+            restricted: false,
+          },
+        },
+        labels: {
+          validDef: {
+            required: true,
+            restricted: true,
+            options: props.labelOptions,
+          },
+        },
+      },
+    };
+  }
+
+  handleUpdateDate(e) {
+    this.setState({date: new Date(e.value)});
+  }
+  handleWhatChange(what) {
+    this.setState({what});
+  }
+  handleLabelChange(e) {
+    this.setState({labels: [e.value]});
+  }
+
+  handleSave() {
+    const dt = this.state.date;
+    const id = this.state.nextElementId;
+    const element = {
+      date: Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()),
+      what: this.state.what,
+      label: this.state.labels.length > 0 ? this.state.labels[0] : '',
+      elementId: id,
+    };
+    const saveObj = this.isEditMode ? Object.assign({}, this.props.element, element) : element;
+
+    //log('info', {message: 'Saving cashflow', stackTrace: element.provider });
+
+    const api = new RestAPI('wish');
+    if (this.isEditMode) {
+      api.update(saveObj);
+    } else {
+      api.insert(saveObj);
+    }
+  }
+
+  render() {
+    // Util Functions
+    const buildTb = props => this.buildRComponent(props, p => new TextField(p));
+    const buildProps = label => {
+      return {
+        id: this.id + label,
+        label,
+        value: this.state[label.toLowerCase()],
+        validDef: this.state.validationState[label.toLowerCase()].validDef,
+        update: this[`handle${label}Change`].bind(this),
+      };
+    };
+
+    const labelImgArray = labelImages.map(label => 
+      this.fill('labelField', {id: this.id + 'Labels', checked: Array.isArray(this.state.labels) && this.state.labels.indexOf(label.label) >= 0 ? 'checked' : '', ...label}));
+      
+    const labelProps = {
+      id: this.id + 'Labels',
+      content: labelImgArray.slice(0, 7).join('') + '</ul><ul class="direction">' + labelImgArray.slice(7).join(''),
+    };
+    const date = this.fill('dateTextField', {id: this.id + 'Date', label: 'Date', value: this.state.date.toISOString().split('T')[0]});
+    const labels = this.fill('labelsField', labelProps);
+    
+    const whatProps = buildProps('What');
+
+    const save = this.fill('imgButton', {id: this.id + 'Save', disabled: '', className: 'financeSave', img: "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAADt0lEQVRoge2YvWsUQRjGn9m7fBg/iJLEJo2NAbFRtPQfSCEpFOwshPSpYhMUq4CojQr+C4JRCyWNgqAgsVUkhSAYNGcgGtDkEnPvY7E7u7Ozs7O3J5tEuBfm9m5m7+b3zPsxswd0rWtd69pumsobOPNydZxUD0iMEgBArC4343FuNfH+wgigFBQAAgAJkhDzKgIRQihgdBUhRAQtEUjciImFLdQOHflJUTc+TgzfaUdAkDdgw4eEaQthjGbAkwQluoIgEfUjHgeTn6Z+JQahePvE48b1dgTU8wWk4R38EAknVUqFq48IDkjgjXb6/uvU999cORuCh6pAPQkBUera2JPv/YsTI1d9AvI9YMO7PCAShopefQ0tAjJsYngiu0g0vJJMrN8qcnpsrjHbkYAieAARtBlCOr6ZhJMkYZUvIAkpJoORCkwfn1ueKi+gAB5AnHy6UYuwhNArQIcdM/B6fgU1k8eQnwMWvBNAomlVci9jz6UTVkSyC2B7wAEfdR0uLaAIHgg9EMInChjNbMLrkpqZglFZjUPICQ9fGOQLKIAHwhW0XaXvTycoQWY9YFaqsKKVgy8UYMK7dLjCwtzQ4rKakwM6V2jc74T3aPDsA354qADL6y2M9CebuZmEjPMgaa8unzIqk8QeEApWmoxxbHifDzxl1IInEAQJrKr34OaHJr6tb2eOBa24pEqmUqXKrYbfIO59DhD07XPDd+IBGx4A+g/UsPGrBQoBpfDu9wAuvf0DcLtoHbRsADVHt0JvXx1BX28peK8AG54g6vUABweDdEix1wgde9L08SCvziddbvjOQ8iq7Slh0YcdgfdUQu9OvNfh/QL+A3ivgL0E79NRHEJ7GN4vYC/Be0QUl1EL/txQD2ZODmCkT8UPNOaJ0/fZPPfYfY2m4NanGhbWggw8PQoKd2J75f8dPtsvIhjqIaaObZeCB4pOo46wqQJevx/qsUPRjC23eZLYHfNVwacfatqD9wrIS9gq4ZPn4jR8Z2XUAR9Wm+rgRaQUvF9ATqmsFJ7l4L0C8up8lfA6hGx4epQU7sSZTapCeA3aLrxfgAseqBQ+bO3DFwjIwusfrQre/JMgBd9JFXLBo2L4JITS8D4/FJbRr4/m0Xj4NDmYVQhv5sGP+RdYe/bcKiZlBETKg9YmatubumtH4GHOW6DA99/oEoDRoxfPx/Ag0GgSw73VwK9sqXjyQ+Pj8aQkvpT2gBCT+ovmIswutrDclErg7y7ttzbQEF4UJ3Nd0LWuda1ru2p/ASsCdZ0lM904AAAAAElFTkSuQmCC"});
+    const actionButtonProps = {id: this.id + 'ActionButtons', className: 'buttons', content: [save].join('')};
+    const actionButtons = this.fill('simplediv', actionButtonProps);
+
+    this.registerHandler(this.id + 'Labels', this.handleLabelChange.bind(this));
+    this.registerHandler(this.id + 'Save', this.handleSave.bind(this));
+    this.registerHandler(this.id + 'Date', this.handleUpdateDate.bind(this));
+
+    const containerProps = {
+      id: this.id, 
+      className: 'page', 
+      content: [actionButtons, date, buildTb(whatProps), labels].join(''),
+    };
+    return this.fill('container', containerProps);
+  }
+}
+
+// Page - Components - End Wish List Form
 /////////////////////////////////////////////
 /////////////////////////////////////////////
 // Page - Components - Modal
@@ -1684,9 +1798,13 @@ const loadLiability = function() {
 
 const loadWishlist = function() {
   // Register root node
+  const handleEdit = (data, element) => {
+    RComponent.buildRoot({id: 'wishListForm', data, element}, p => new WishListForm(p));
+  };
   RComponent.buildRoot({
     id: 'wishListTable',
     entity: 'wish',
+    handleEdit,
     formatter: {
       date: commonFormatters.date,
       what: (row) => {
