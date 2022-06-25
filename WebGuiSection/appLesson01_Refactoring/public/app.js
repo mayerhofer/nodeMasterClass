@@ -131,7 +131,7 @@ class RestAPI {
       path: '/'+route,
       headers: {
         'Content-Type': 'application/json',
-        connection: 'Close',
+        //connection: 'Close',
       },
     };
   }
@@ -656,8 +656,9 @@ class RComponent {
   }
   mount(ancestral) {
     // Register component in Tree.
-    let node = TreeNode.getRegistered(this.id);
-    if (! node) {
+    let node = null;
+    if (this.id || ! (node = TreeNode.getRegistered(this.id))) {
+      this.id = this.props.id;
       node = new TreeNode(this, ancestral);
       node.register();
     }
@@ -992,40 +993,37 @@ class ErrorTable extends RComponent {
   }
 }
 /////////////////////////////////////////////
-// Page - Business Components - Liability Table
-class LiabilityTable extends RComponent {
+// Page - Business Components - Generic Data Table
+class GenericTable extends RComponent {
+  // props: {
+  //   entity: string;
+  //   handleAdd: (data) => void;
+  //   handleEdit: (row) => void;
+  //   formatter: object; // (fields except mandatory date and elementId)
+  // }
   constructor(props) {
     super(props);
 
     this.state = {
       data: [],
       last: 30,
-    };
-
-    this.util = {
       formatter: {
-        date: (date) => {
-          let obj = new Date(date);
+        date: (row) => {
+          let obj = new Date(row.date);
           let day = obj.getDate();
           let month = obj.getMonth();
           let strDay = day < 10 ? '0' + day.toString() : day.toString();
           let strMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month];
   
-          return `${strDay}/${strMonth}`;
+          return {className: 'form-date', content: `${strDay}/${strMonth}`};
         },
-        amount: (num) => {
-          if (typeof num === 'number') {
-            return num.toFixed(2);
-          } else {
-            return '--';
-          }
-        },
+        ...props.formatter
       },
     };
   }
 
   componentDidMount() {
-    const api = new RestAPI('liability');
+    const api = new RestAPI(this.props.entity);
     const self = this;
     
     api.get().then(data => {
@@ -1038,156 +1036,54 @@ class LiabilityTable extends RComponent {
     });
   }
 
-  rowToHtml(row) {
-    const formatter = this.util.formatter;
-    const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
-    //const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
-    const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content: formatter.amount(row.amount)});
-
-    return this.fill('simplediv', {className: 'table__row', content: date + amount});
-  }
-
-  render() {
-    const content = this.fill('scrollDiv', {
-      id: this.id + 'content', 
-      content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
-    });
-    const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
-    const buttonId = 'AddNewLiability';
-    const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
-    const header = this.fill('simplediv', {className: 'table__header', content: label + button});
-
-    // this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
-    // this.registerHandler(buttonId, this.handleAddNew.bind(this));
-
-    return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
-  }
-}
-var count = 0;
-const updateAll = cfs => {
-  const cf = cfs.pop();
-  if (cf) {
-    setTimeout(() => {
-      const api = new RestAPI('cashflow');
-      count++;
-
-      console.log(count);
-
-      api.update(cf);
-      updateAll(cfs);
-    }, 1000);
-  }
-}
-// Page - Business Components - End Liability Table
-/////////////////////////////////////////////
-// Page - Business Components - Finance Table
-class FinanceTable extends RComponent {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      data: [],
-      last: 30,
-    }
-
-    this.util = {
-      formatter: {
-        date: (date) => {
-          let obj = new Date(date);
-          let day = obj.getDate();
-          let month = obj.getMonth();
-          let strDay = day < 10 ? '0' + day.toString() : day.toString();
-          let strMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month];
-  
-          return `${strDay}/${strMonth}`;
-        },
-        provider: (str) => {
-          if (typeof str === 'string') {
-            return str.length > 17 ? str.substring(0, 15) + '...' : str;
-          } else {
-            return 'error: invalid provider';
-          }
-        },
-        amount: (num) => {
-          if (typeof num === 'number') {
-            return num.toFixed(2);
-          } else {
-            return '--';
-          }
-        },
-        currency: (cur) => {
-          // TODO: replace by ASCII currency symbols inside badge component
-          return cur;
-        }
-      },
-    };
-  }
-  componentDidMount() {
-    const api = new RestAPI('cashflow');
-    const self = this;
-    
-    api.get().then(data => {
-      // At the very least sort by date descending to present meaninful information right on top.
-      // Should always have the most recent cashflows so next(elementId) can be passed to CREATE form.
-      data.sort((a,b) => {
-        return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
-      });
-      const toUpdate = data.filter(d => d.amount < 500 && d.direction).map(d => Object.assign({}, d, {direction: false}));
-      console.log('updating ' + toUpdate.length.toString());
-      updateAll(toUpdate);
-      self.setState({data: data});
-    });
-  }
   handleDelete(element) {
-    const api = new RestAPI('cashflow');
+    if (confirm('Delete?')) {
+      const api = new RestAPI(this.props.entity);
+      const tableSelf = this;
 
-    api.delete(element);
+      api.delete(element).then(() => {
+        tableSelf.setState({...tableSelf.state, data: tableSelf.state.data.filter(ele => ele !== element)});
+      });
+    }
   }
   handleEdit(element) {
-    if (typeof this.props.callInput === 'function') {
-      this.props.callInput(this.props.data, element);
+    if (typeof this.props.handleEdit === 'function') {
+      this.props.handleEdit(this.state.data, element);
     }
   }
+
   rowToHtml(row) {
-    const formatter = this.util.formatter;
-    const date = this.fill('simplediv', {className: 'form-date', content: formatter.date(row.date)});
-    const provider = this.fill('simplediv', {className: 'cashflowProvider', content: formatter.provider(row.provider)});
-    const amount = this.fill('simplediv', {className: 'cashflowAmount' + (row.direction ? ' income' : ' expense'), content: formatter.amount(row.amount)});
+    const formatter = this.state.formatter;
+    const fields = Object.keys(formatter).map(key => this.fill('simplediv', formatter[key](row)));
+
     const editImg = this.fill('image', {img: RComponent.images64['edit']});
-    const delBtn = this.fill('button', {id: row.elementId + 'DelBtn', className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
-    const editBtn = this.fill('button', {id: row.elementId + 'EditBtn', className: 'act-btn', content: editImg});
+    const delBtn = this.fill('button', {id: this.id + 'DelBtn' + row.elementId, className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
+    const editBtn = this.fill('button', {id: this.id + 'EditBtn' + row.elementId, className: 'act-btn', content: editImg});
     const actionButtons = this.fill('simplediv', {className: 'actions-wrapper', content: editBtn+delBtn});
 
-    this.registerHandler(row.elementId + 'DelBtn', () => this.handleDelete(row));
-    this.registerHandler(row.elementId + 'EditBtn', () => this.handleEdit(row));
+    this.registerHandler(this.id + 'DelBtn' + row.elementId, () => this.handleDelete.bind(this)(row));
+    this.registerHandler(this.id + 'EditBtn' + row.elementId, () => this.handleEdit.bind(this)(row));
 
-    return this.fill('simplediv', {className: 'table__row', content: date + provider + amount + actionButtons});
+    return this.fill('simplediv', {className: 'table__row', content: fields.join('') + actionButtons});
   }
-  handleAddNew() {
-    if (typeof this.props.callInput === 'function') {
-      this.props.callInput(this.state.data);
-    }
-  }
-  handleScroll() {
-    this.setState({last: this.state.last + 20});
-  }
+
   render() {
     const content = this.fill('scrollDiv', {
       id: this.id + 'content', 
-      //content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join('')
-      content: this.state.data.map(this.rowToHtml.bind(this)).join('')
+      content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join(''),
     });
     const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
-    const buttonId = 'AddNewCashflow';
-    const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
+    const buttonId = 'AddNew' + this.props.entity;
+    const button = this.fill('button', {id: buttonId, className: 'table__header-add', content: '<span>+</span>'});
     const header = this.fill('simplediv', {className: 'table__header', content: label + button});
 
-    //this.registerHandler(this.id + 'content', this.handleScroll.bind(this));
-    this.registerHandler(buttonId, this.handleAddNew.bind(this));
+    this.registerHandler(buttonId, () => this.handleEdit.bind(this)());
 
     return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
   }
 }
+// Page - Business Components - End Generic Data Table
+/////////////////////////////////////////////
 /////////////////////////////////////////////
 // Page - Components - Form Text Field
 class TextField extends RComponent {
@@ -1731,7 +1627,7 @@ class LiabilityModal extends RComponent {
     const amount = this.fill('amountField', amountProps);
     const debtor = buildTb(buildProps('Debtor'));
     const buttonId = 'AddNewLiability';
-    const button = this.fill('button', {id: buttonId, className: 'cashflowButtonAdd', content: '<span>+</span>'});
+    const button = this.fill('button', {id: buttonId, className: 'table__header-add', content: '<span>+</span>'});
     const header = this.fill('simplediv', {className: 'table__header', content: button});
     const content = `
     <h1>Add Liability</h1><br />${header}<br />
@@ -1752,31 +1648,47 @@ class LiabilityModal extends RComponent {
 const loadFinance = function() {
 
   // Register root node
-  let api = new RestAPI('cashflow');
+  const handleEdit = (data, element) => {
+    const optionApi = new RestAPI('option');
+    optionApi.get().then(options => {
+      const labelOptions = options.filter(option => option.combo === 'labels').map(o => o.description);
+      const bookOptions = options.filter(option => option.combo === 'books');
 
-  api.get().then(data => {
-    const callInput = (data, element) => {
-      const optionApi = new RestAPI('option');
-      optionApi.get().then(options => {
-        const labelOptions = options.filter(option => option.combo === 'labels').map(o => o.description);
-        const bookOptions = options.filter(option => option.combo === 'books');
+      RComponent.buildRoot({id: 'fincForm', labelOptions, bookOptions, data, element}, p => new FinanceForm(p));
+    });
+  };
+  const props = {
+    id: 'cfMainTable',
+    entity: 'cashflow',
+    handleEdit,
+    formatter: {
+      provider: (row) => {
+        const str = row.provider;
+        let content = '';
+        if (typeof str === 'string') {
+          content = str.length > 17 ? str.substring(0, 15) + '...' : str;
+        } else {
+          content = 'error: invalid provider';
+        }
+        return {className: 'cashflowProvider', content};
+      },
+      amount: (row) => {
+        let content = '';
+        if (typeof row.amount === 'number') {
+          content = row.amount.toFixed(2);
+        } else {
+          content = '--';
+        }
+        return {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content};
+      },
+      // currency: (row) => {
+      //   // TODO: replace by ASCII currency symbols inside badge component
+      //   return {className: 'cashflowProvider', content: row.currency};
+      // }
+    },
+  };
 
-        RComponent.buildRoot({id: 'fincForm', labelOptions, bookOptions, data, element}, p => new FinanceForm(p));
-      });
-    };
-    const props = {
-      data: data.sort((a,b) => {
-        return ((new Date(b.date)).getTime() - (new Date(a.date)).getTime())
-      }),
-      id: 'cfMainTable',
-      callInput,
-    };
-
-    RComponent.buildRoot(props, p=>new FinanceTable(p));
-  }).catch(err => {
-    window.document.getElementById('app').innerHTML = err;
-    //callback(500, 'text/html', err);
-  });
+  RComponent.buildRoot(props, p=>new GenericTable(p));
 }
 
 const loadErrors = function() {
@@ -1788,7 +1700,35 @@ const loadErrors = function() {
 
 const loadLiability = function() {
   // Register root node
+  // RComponent.buildRoot({
+  //   id: 'liabilityTable',
+  // }, p=>new LiabilityTable(p));
   RComponent.buildRoot({
     id: 'liabilityTable',
-  }, p=>new LiabilityTable(p));
+    entity: 'liability',
+    formatter: {
+      amount: (row) => {
+        let content = '';
+        if (typeof row.amount === 'number') {
+          content = row.amount.toFixed(2);
+        } else {
+          content = '--';
+        }
+        return {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content};
+      },
+    },
+  }, p => new GenericTable(p));
+}
+
+const loadWishlist = function() {
+  // Register root node
+  RComponent.buildRoot({
+    id: 'wishListTable',
+    entity: 'wish',
+    formatter: {
+      what: (row) => {
+        return {className: 'cashflowProvider', content: row.what};
+      },
+    },
+  }, p=>new GenericTable(p));
 }

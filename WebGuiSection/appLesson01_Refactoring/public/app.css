@@ -369,7 +369,7 @@ nav {
   color: #BC7C9C;
   display: inline-flex;
 }
-.cashflowButtonAdd {
+.table__header-add {
   background-color: transparent;
   border: 3px;
   border-radius: 30%;
@@ -381,7 +381,7 @@ nav {
   text-align: center;
   text-decoration: none;
 }
-.cashflowButtonAdd span {
+.table__header-add span {
   background-color: #7A5980;
 
   border-radius: 15px; /* or 50% */
