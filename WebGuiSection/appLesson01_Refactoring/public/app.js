@@ -1007,18 +1007,7 @@ class GenericTable extends RComponent {
     this.state = {
       data: [],
       last: 30,
-      formatter: {
-        date: (row) => {
-          let obj = new Date(row.date);
-          let day = obj.getDate();
-          let month = obj.getMonth();
-          let strDay = day < 10 ? '0' + day.toString() : day.toString();
-          let strMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month];
-  
-          return {className: 'form-date', content: `${strDay}/${strMonth}`};
-        },
-        ...props.formatter
-      },
+      formatter: props.formatter,
     };
   }
 
@@ -1052,17 +1041,29 @@ class GenericTable extends RComponent {
     }
   }
 
+  buildCell(key, row, formatter) {
+    const format = formatter[key](row);
+
+    return this.fill(format.tagName, format);
+  }
+
   rowToHtml(row) {
     const formatter = this.state.formatter;
-    const fields = Object.keys(formatter).map(key => this.fill('simplediv', formatter[key](row)));
+    const fields = Object.keys(formatter).map(key => this.buildCell(key, row, formatter));
 
-    const editImg = this.fill('image', {img: RComponent.images64['edit']});
-    const delBtn = this.fill('button', {id: this.id + 'DelBtn' + row.elementId, className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
-    const editBtn = this.fill('button', {id: this.id + 'EditBtn' + row.elementId, className: 'act-btn', content: editImg});
-    const actionButtons = this.fill('simplediv', {className: 'actions-wrapper', content: editBtn+delBtn});
+    let buttons = '';
+    if (typeof this.props.handleEdit === 'function') {
+      const editImg = this.fill('image', {img: RComponent.images64['edit']});
+      const editBtn = this.fill('button', {id: this.id + 'EditBtn' + row.elementId, className: 'act-btn', content: editImg});
+      const delBtn = this.fill('button', {id: this.id + 'DelBtn' + row.elementId, className: 'act-btn', content: this.fill('image', {img: RComponent.images64['delete']})});
+
+      this.registerHandler(this.id + 'EditBtn' + row.elementId, () => this.handleEdit.bind(this)(row));
+
+      buttons = editBtn + delBtn;
+    }
+    const actionButtons = this.fill('simplediv', {className: 'actions-wrapper', content: buttons});
 
     this.registerHandler(this.id + 'DelBtn' + row.elementId, () => this.handleDelete.bind(this)(row));
-    this.registerHandler(this.id + 'EditBtn' + row.elementId, () => this.handleEdit.bind(this)(row));
 
     return this.fill('simplediv', {className: 'table__row', content: fields.join('') + actionButtons});
   }
@@ -1073,11 +1074,14 @@ class GenericTable extends RComponent {
       content: this.state.data.slice(0, this.state.last).map(this.rowToHtml.bind(this)).join(''),
     });
     const label = this.fill('simplediv', {className: 'table__header-label', content: (new Date()).toISOString().substring(0, 10)});
-    const buttonId = 'AddNew' + this.props.entity;
-    const button = this.fill('button', {id: buttonId, className: 'table__header-add', content: '<span>+</span>'});
-    const header = this.fill('simplediv', {className: 'table__header', content: label + button});
+    let button = '';
+    if (typeof this.props.handleEdit === 'function') {
+      const buttonId = 'AddNew' + this.props.entity;
+      button = this.fill('button', {id: buttonId, className: 'table__header-add', content: '<span>+</span>'});
 
-    this.registerHandler(buttonId, () => this.handleEdit.bind(this)());
+      this.registerHandler(buttonId, () => this.handleEdit.bind(this)());
+    }
+    const header = this.fill('simplediv', {className: 'table__header', content: label + button});
 
     return this.fill('div', {id: this.id, className: 'table__wrapper', content: header + content});
   }
@@ -1645,6 +1649,28 @@ class LiabilityModal extends RComponent {
 /////////////////////////////////////////////
 // Page - Menu Loaders
 
+const commonFormatters = {
+  date: (row) => {
+    let obj = new Date(row.date);
+    let day = obj.getDate();
+    let month = obj.getMonth();
+    let strDay = day < 10 ? '0' + day.toString() : day.toString();
+    let strMonth = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month];
+
+    return {tagName: 'simplediv', className: 'form-date', content: `${strDay}/${strMonth}`};
+  },
+  amount: (row) => {
+    const isIncome = (row.provider && row.direction) || (row.cashflowId && !row.liability);
+    let content = '';
+    if (typeof row.amount === 'number') {
+      content = row.amount.toFixed(2);
+    } else {
+      content = '--';
+    }
+    return {tagName: 'simplediv', className: 'cashflowAmount' + (isIncome ? ' income' : ' expense'), content};
+  },
+}
+
 const loadFinance = function() {
 
   // Register root node
@@ -1662,6 +1688,7 @@ const loadFinance = function() {
     entity: 'cashflow',
     handleEdit,
     formatter: {
+      ...commonFormatters,
       provider: (row) => {
         const str = row.provider;
         let content = '';
@@ -1670,21 +1697,8 @@ const loadFinance = function() {
         } else {
           content = 'error: invalid provider';
         }
-        return {className: 'cashflowProvider', content};
+        return {tagName: 'simplediv', className: 'cashflowProvider', content};
       },
-      amount: (row) => {
-        let content = '';
-        if (typeof row.amount === 'number') {
-          content = row.amount.toFixed(2);
-        } else {
-          content = '--';
-        }
-        return {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content};
-      },
-      // currency: (row) => {
-      //   // TODO: replace by ASCII currency symbols inside badge component
-      //   return {className: 'cashflowProvider', content: row.currency};
-      // }
     },
   };
 
@@ -1695,28 +1709,42 @@ const loadErrors = function() {
   // Register root node
   RComponent.buildRoot({
     id: 'logMainTable',
-  }, p=>new ErrorTable(p));
+    entity: 'errorLog',
+    formatter: {
+      time: (row) => {
+        const addZero = num => num < 10 ? '0' + num.toString() : num.toString();
+        const obj = new Date(row.time);
+        const minutes = addZero(obj.getMinutes());
+        const hour = addZero(obj.getHours());
+        const day = addZero(obj.getDate());
+        const month = addZero(obj.getMonth() + 1);
+
+        return {
+          tagName: 'simplediv',
+          className: 'form-date' + (row.type === 'error' ? ' expense' : 'income'), 
+          content: `${day}/${month}<BR />${hour}:${minutes}`
+        };
+      },
+      message: (row) => {
+        return {tagName: 'simplediv', className: 'longtext', content: `<span>${row.message}</span>`};
+      },
+      stackTrace: (row) => {
+        return {
+          id: row._id,
+          tagName: 'showStackTrace',
+          className: 'btn-trace',
+          content: row.stackTrace.replace(new RegExp('\n    ', 'g'), '<BR />')
+        };
+      }
+    },
+  }, p=>new GenericTable(p));
 }
 
 const loadLiability = function() {
-  // Register root node
-  // RComponent.buildRoot({
-  //   id: 'liabilityTable',
-  // }, p=>new LiabilityTable(p));
   RComponent.buildRoot({
     id: 'liabilityTable',
     entity: 'liability',
-    formatter: {
-      amount: (row) => {
-        let content = '';
-        if (typeof row.amount === 'number') {
-          content = row.amount.toFixed(2);
-        } else {
-          content = '--';
-        }
-        return {className: 'cashflowAmount' + (row.liability ? ' expense' : ' income'), content};
-      },
-    },
+    formatter: commonFormatters,
   }, p => new GenericTable(p));
 }
 
@@ -1726,8 +1754,9 @@ const loadWishlist = function() {
     id: 'wishListTable',
     entity: 'wish',
     formatter: {
+      date: commonFormatters.date,
       what: (row) => {
-        return {className: 'cashflowProvider', content: row.what};
+        return {tagName: 'simplediv', className: 'cashflowProvider', content: row.what};
       },
     },
   }, p=>new GenericTable(p));
