@@ -149,41 +149,44 @@ handlers.index = function(data, callback) {
 
 // Public static assets
 handlers.public = function(requestData, callback) {
-    // Reject any request that isn't a get
-    if (requestData.httpMethod === 'get') {
-        // Get the file name being requested
-        let trimmedAssetName = requestData.trimmedPath.replace('public/', '').trim();
+  // Reject any request that isn't a get
+  if (requestData.httpMethod === 'get') {
+    // Get the file name being requested
+    let trimmedAssetName = requestData.trimmedPath.replace('public/', '').trim();
 
-        if (trimmedAssetName.length > 0) {
-            // Read in the asset's data
-            helpers.getStaticAsset(trimmedAssetName, function(err, data) {
-                if(!err && data){
-                    // Determine the content type (default to plain text)
-                    let contentType = 'plain';
+    if (trimmedAssetName.length > 0) {
+      // Read in the asset's data
+      helpers.getStaticAsset(trimmedAssetName, function(err, data) {
+        if(!err && data){
+          // Determine the content type (default to plain text)
+          let contentType = 'plain';
 
-                    if (trimmedAssetName.indexOf('.css') > -1) {
-                        contentType = 'text/css';
-                    } else if (trimmedAssetName.indexOf('.png') > -1) {
-                        contentType = 'png';
-                    } else if (trimmedAssetName.indexOf('.jpg') > -1) {
-                        contentType = 'jpg';
-                    } else if (trimmedAssetName.indexOf('.ico') > -1) {
-                        contentType = 'favicon';
-                    } else if (trimmedAssetName.indexOf('.js') > -1) {
-                        contentType = 'application/javascript';
-                    }
+          if (trimmedAssetName.indexOf('.css') > -1) {
+            contentType = 'text/css';
+	    data = data.replace('/*{ADDED_STYLE}*/', compStyles);
+          } else if (trimmedAssetName.indexOf('.png') > -1) {
+            contentType = 'png';
+          } else if (trimmedAssetName.indexOf('.jpg') > -1) {
+            contentType = 'jpg';
+          } else if (trimmedAssetName.indexOf('.ico') > -1) {
+            contentType = 'favicon';
+          } else if (trimmedAssetName.indexOf('.js') > -1) {
+            contentType = 'application/javascript';
+	    data = data.replace('/*{ADDED_CODE}*/', compCode);
+	    data = data.replace('/*{TEMPLATES}*/', compHtml);
+          }
 
-                    // Callback the data
-                    callback(200, contentType, data);
-                } else {
-                    console.log(err);
-                    callback(404);
-                }
-            });
+          // Callback the data
+          callback(200, contentType, data);
+        } else {
+          console.log(err);
+          callback(404);
         }
-    } else {
-        callback(405);
+      });
     }
+  } else {
+    callback(405);
+  }
 };
 
 // Define the router
