@@ -155,15 +155,21 @@ handlers.public = function(requestData, callback) {
     let trimmedAssetName = requestData.trimmedPath.replace('public/', '').trim();
 
     if (trimmedAssetName.length > 0) {
+      // Load Component Modules
+      // TODO: Finish creating module structure so to bundle only what is used.
+      //helpers.loadModules()
       // Read in the asset's data
       helpers.getStaticAsset(trimmedAssetName, function(err, data) {
         if(!err && data){
           // Determine the content type (default to plain text)
+          // data is returned as buffer from readFile, so a toString needs to be called before handling as a string
+          const staticContent = data.toString();
           let contentType = 'plain';
 
           if (trimmedAssetName.indexOf('.css') > -1) {
+            let compStyles = '';
             contentType = 'text/css';
-	    data = data.replace('/*{ADDED_STYLE}*/', compStyles);
+	          data = staticContent.replace('/*{ADDED_STYLE}*/', compStyles);
           } else if (trimmedAssetName.indexOf('.png') > -1) {
             contentType = 'png';
           } else if (trimmedAssetName.indexOf('.jpg') > -1) {
@@ -172,8 +178,10 @@ handlers.public = function(requestData, callback) {
             contentType = 'favicon';
           } else if (trimmedAssetName.indexOf('.js') > -1) {
             contentType = 'application/javascript';
-	    data = data.replace('/*{ADDED_CODE}*/', compCode);
-	    data = data.replace('/*{TEMPLATES}*/', compHtml);
+            let compCode = '';
+            let compHtml = '';
+	          data = staticContent.replace('/*{ADDED_CODE}*/', compCode);
+	          data = staticContent.replace('/*{TEMPLATES}*/', compHtml);
           }
 
           // Callback the data
